@@ -4,6 +4,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QQuickWindow>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#include <QGuiApplication>
 #include <QX11Info>
 #endif
 
@@ -56,7 +57,8 @@ public:
                 {MPV_RENDER_PARAM_INVALID, nullptr},
                 {MPV_RENDER_PARAM_INVALID, nullptr}};
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-            if (QGuiApplication::platformName().contains("xcb")) {
+            if (QGuiApplication::platformName().contains(QLatin1String("xcb"),
+                                                         Qt::CaseInsensitive)) {
                 params[2].type = MPV_RENDER_PARAM_X11_DISPLAY;
                 params[2].data = QX11Info::display();
             }
