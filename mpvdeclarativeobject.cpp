@@ -403,13 +403,13 @@ qint64 MpvDeclarativeObject::duration() const {
 qint64 MpvDeclarativeObject::position() const {
     return isStopped()
         ? 0
-        : qMin(qMax(mpvGetProperty(QLatin1String("time-pos")).toLongLong(),
-                    qint64(0)),
-               duration());
+        : qBound(qint64(0),
+                 mpvGetProperty(QLatin1String("time-pos")).toLongLong(),
+                 duration());
 }
 
 int MpvDeclarativeObject::volume() const {
-    return qMin(qMax(mpvGetProperty(QLatin1String("volume")).toInt(), 0), 100);
+    return qBound(0, mpvGetProperty(QLatin1String("volume")).toInt(), 100);
 }
 
 bool MpvDeclarativeObject::mute() const {
@@ -526,17 +526,14 @@ bool MpvDeclarativeObject::screenshotTagColorspace() const {
 }
 
 int MpvDeclarativeObject::screenshotPngCompression() const {
-    return qMin(
-        qMax(
-            mpvGetProperty(QLatin1String("screenshot-png-compression")).toInt(),
-            0),
+    return qBound(
+        0, mpvGetProperty(QLatin1String("screenshot-png-compression")).toInt(),
         9);
 }
 
 int MpvDeclarativeObject::screenshotJpegQuality() const {
-    return qMin(
-        qMax(mpvGetProperty(QLatin1String("screenshot-jpeg-quality")).toInt(),
-             0),
+    return qBound(
+        0, mpvGetProperty(QLatin1String("screenshot-jpeg-quality")).toInt(),
         100);
 }
 
@@ -706,8 +703,7 @@ qreal MpvDeclarativeObject::avsync() const {
 int MpvDeclarativeObject::percentPos() const {
     return isStopped()
         ? 0
-        : qMin(qMax(mpvGetProperty(QLatin1String("percent-pos")).toInt(), 0),
-               100);
+        : qBound(0, mpvGetProperty(QLatin1String("percent-pos")).toInt(), 100);
 }
 
 qreal MpvDeclarativeObject::estimatedVfFps() const {
@@ -787,28 +783,28 @@ bool MpvDeclarativeObject::seek(qint64 value, bool absolute, bool percent) {
     const qint64 max =
         percent ? 100 : (absolute ? duration() : duration() - position());
     return mpvSendCommand(
-        QVariantList{"seek", qMin(qMax(value, min), max), arguments});
+        QVariantList{"seek", qBound(min, value, max), arguments});
 }
 
 bool MpvDeclarativeObject::seekAbsolute(qint64 position) {
     if (isStopped() || position == this->position()) {
         return false;
     }
-    return seek(qMin(qMax(position, qint64(0)), duration()), true);
+    return seek(qBound(qint64(0), position, duration()), true);
 }
 
 bool MpvDeclarativeObject::seekRelative(qint64 offset) {
     if (isStopped() || offset == 0) {
         return false;
     }
-    return seek(qMin(qMax(offset, -position()), duration() - position()));
+    return seek(qBound(-position(), offset, duration() - position()));
 }
 
 bool MpvDeclarativeObject::seekPercent(int percent) {
     if (isStopped() || percent == this->percentPos()) {
         return false;
     }
-    return seek(qMin(qMax(percent, 0), 100), true, true);
+    return seek(qBound(0, percent, 100), true, true);
 }
 
 bool MpvDeclarativeObject::screenshot() {
@@ -916,14 +912,14 @@ void MpvDeclarativeObject::setPosition(qint64 position) {
     if (isStopped() || position == this->position()) {
         return;
     }
-    seek(qMin(qMax(position, qint64(0)), duration()));
+    seek(qBound(qint64(0), position, duration()));
 }
 
 void MpvDeclarativeObject::setVolume(int volume) {
     if (volume == this->volume()) {
         return;
     }
-    mpvSetProperty(QLatin1String("volume"), qMin(qMax(volume, 0), 100));
+    mpvSetProperty(QLatin1String("volume"), qBound(0, volume, 100));
 }
 
 void MpvDeclarativeObject::setHwdec(const QString &hwdec) {
@@ -958,8 +954,7 @@ void MpvDeclarativeObject::setVideoRotate(int videoRotate) {
     if (isStopped() || videoRotate == this->videoRotate()) {
         return;
     }
-    mpvSetProperty(QLatin1String("video-rotate"),
-                   qMin(qMax(videoRotate, 0), 359));
+    mpvSetProperty(QLatin1String("video-rotate"), qBound(0, videoRotate, 359));
 }
 
 void MpvDeclarativeObject::setVideoAspect(qreal videoAspect) {
@@ -1045,7 +1040,7 @@ void MpvDeclarativeObject::setScreenshotPngCompression(
         return;
     }
     mpvSetProperty(QLatin1String("screenshot-png-compression"),
-                   qMin(qMax(screenshotPngCompression, 0), 9));
+                   qBound(0, screenshotPngCompression, 9));
 }
 
 void MpvDeclarativeObject::setScreenshotTemplate(
@@ -1108,7 +1103,7 @@ void MpvDeclarativeObject::setScreenshotJpegQuality(int screenshotJpegQuality) {
         return;
     }
     mpvSetProperty(QLatin1String("screenshot-jpeg-quality"),
-                   qMin(qMax(screenshotJpegQuality, 0), 100));
+                   qBound(0, screenshotJpegQuality, 100));
 }
 
 void MpvDeclarativeObject::setMpvCallType(
@@ -1124,8 +1119,7 @@ void MpvDeclarativeObject::setPercentPos(int percentPos) {
     if (isStopped() || percentPos == this->percentPos()) {
         return;
     }
-    mpvSetProperty(QLatin1String("percent-pos"),
-                   qMin(qMax(percentPos, 0), 100));
+    mpvSetProperty(QLatin1String("percent-pos"), qBound(0, percentPos, 100));
 }
 
 void MpvDeclarativeObject::handleMpvEvents() {
