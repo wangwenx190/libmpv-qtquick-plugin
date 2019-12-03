@@ -1,8 +1,19 @@
 TEMPLATE = lib
-CONFIG += plugin
+CONFIG += \
+    plugin \
+    warn_on \
+    c11 \
+    strict_c \
+    c++17 \
+    strict_c++ \
+    rtti_off \
+    exceptions_off
 TARGET = $$qtLibraryTarget(mpvwrapperplugin)
 QT += quick
-unix: !android: QT += x11extras
+unix: !android: !macx: QT += x11extras
+#DEFINES += \
+#    QT_NO_CAST_FROM_ASCII \
+#    QT_NO_CAST_TO_ASCII
 
 # Qt's QML plugins should be relocatable
 CONFIG += relative_qt_rpath
@@ -10,7 +21,7 @@ CONFIG += relative_qt_rpath
 # Disable deprecated mpv APIs.
 DEFINES += MPV_ENABLE_DEPRECATED=0
 
-win32:!mingw {
+win32: !mingw {
     # You can download shinchiro's libmpv SDK (build from mpv's master branch) from:
     # https://sourceforge.net/projects/mpv-player-windows/files/libmpv/
     isEmpty(MPV_SDK_DIR) {

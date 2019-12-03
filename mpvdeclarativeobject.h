@@ -136,14 +136,14 @@ public:
     Q_ENUM(MpvCallType)
 
     struct MediaTracks {
-        QList<SingleTrackInfo> videoChannels;
-        QList<SingleTrackInfo> audioTracks;
-        QList<SingleTrackInfo> subtitleStreams;
+        QVector<SingleTrackInfo> videoChannels;
+        QVector<SingleTrackInfo> audioTracks;
+        QVector<SingleTrackInfo> subtitleStreams;
     };
 
-    using Chapters = QList<SingleTrackInfo>;
+    using Chapters = QVector<SingleTrackInfo>;
 
-    using AudioDevices = QList<SingleTrackInfo>;
+    using AudioDevices = QVector<SingleTrackInfo>;
 
     using Metadata = SingleTrackInfo;
 
@@ -331,72 +331,34 @@ public:
     // File types supported by mpv:
     // https://github.com/mpv-player/mpv/blob/master/player/external_files.c
     [[nodiscard]] QStringList videoSuffixes() const {
-        return QStringList{QLatin1String("*.3g2"),   QLatin1String("*.3ga"),
-                           QLatin1String("*.3gp"),   QLatin1String("*.3gp2"),
-                           QLatin1String("*.3gpp"),  QLatin1String("*.amv"),
-                           QLatin1String("*.asf"),   QLatin1String("*.asx"),
-                           QLatin1String("*.avf"),   QLatin1String("*.avi"),
-                           QLatin1String("*.bdm"),   QLatin1String("*.bdmv"),
-                           QLatin1String("*.bik"),   QLatin1String("*.clpi"),
-                           QLatin1String("*.cpi"),   QLatin1String("*.dat"),
-                           QLatin1String("*.divx"),  QLatin1String("*.drc"),
-                           QLatin1String("*.dv"),    QLatin1String("*.dvr-ms"),
-                           QLatin1String("*.f4v"),   QLatin1String("*.flv"),
-                           QLatin1String("*.gvi"),   QLatin1String("*.gxf"),
-                           QLatin1String("*.hdmov"), QLatin1String("*.hlv"),
-                           QLatin1String("*.iso"),   QLatin1String("*.letv"),
-                           QLatin1String("*.lrv"),   QLatin1String("*.m1v"),
-                           QLatin1String("*.m2p"),   QLatin1String("*.m2t"),
-                           QLatin1String("*.m2ts"),  QLatin1String("*.m2v"),
-                           QLatin1String("*.m3u"),   QLatin1String("*.m3u8"),
-                           QLatin1String("*.m4v"),   QLatin1String("*.mkv"),
-                           QLatin1String("*.moov"),  QLatin1String("*.mov"),
-                           QLatin1String("*.mp2"),   QLatin1String("*.mp2v"),
-                           QLatin1String("*.mp4"),   QLatin1String("*.mp4v"),
-                           QLatin1String("*.mpe"),   QLatin1String("*.mpeg"),
-                           QLatin1String("*.mpeg1"), QLatin1String("*.mpeg2"),
-                           QLatin1String("*.mpeg4"), QLatin1String("*.mpg"),
-                           QLatin1String("*.mpl"),   QLatin1String("*.mpls"),
-                           QLatin1String("*.mpv"),   QLatin1String("*.mpv2"),
-                           QLatin1String("*.mqv"),   QLatin1String("*.mts"),
-                           QLatin1String("*.mtv"),   QLatin1String("*.mxf"),
-                           QLatin1String("*.mxg"),   QLatin1String("*.nsv"),
-                           QLatin1String("*.nuv"),   QLatin1String("*.ogm"),
-                           QLatin1String("*.ogv"),   QLatin1String("*.ogx"),
-                           QLatin1String("*.ps"),    QLatin1String("*.qt"),
-                           QLatin1String("*.qtvr"),  QLatin1String("*.ram"),
-                           QLatin1String("*.rec"),   QLatin1String("*.rm"),
-                           QLatin1String("*.rmj"),   QLatin1String("*.rmm"),
-                           QLatin1String("*.rms"),   QLatin1String("*.rmvb"),
-                           QLatin1String("*.rmx"),   QLatin1String("*.rp"),
-                           QLatin1String("*.rpl"),   QLatin1String("*.rv"),
-                           QLatin1String("*.rvx"),   QLatin1String("*.thp"),
-                           QLatin1String("*.tod"),   QLatin1String("*.tp"),
-                           QLatin1String("*.trp"),   QLatin1String("*.ts"),
-                           QLatin1String("*.tts"),   QLatin1String("*.txd"),
-                           QLatin1String("*.vcd"),   QLatin1String("*.vdr"),
-                           QLatin1String("*.vob"),   QLatin1String("*.vp8"),
-                           QLatin1String("*.vro"),   QLatin1String("*.webm"),
-                           QLatin1String("*.wm"),    QLatin1String("*.wmv"),
-                           QLatin1String("*.wtv"),   QLatin1String("*.xesc"),
-                           QLatin1String("*.xspf")};
+        return QStringList{
+            "*.3g2",   "*.3ga",    "*.3gp",  "*.3gp2", "*.3gpp",  "*.amv",
+            "*.asf",   "*.asx",    "*.avf",  "*.avi",  "*.bdm",   "*.bdmv",
+            "*.bik",   "*.clpi",   "*.cpi",  "*.dat",  "*.divx",  "*.drc",
+            "*.dv",    "*.dvr-ms", "*.f4v",  "*.flv",  "*.gvi",   "*.gxf",
+            "*.hdmov", "*.hlv",    "*.iso",  "*.letv", "*.lrv",   "*.m1v",
+            "*.m2p",   "*.m2t",    "*.m2ts", "*.m2v",  "*.m3u",   "*.m3u8",
+            "*.m4v",   "*.mkv",    "*.moov", "*.mov",  "*.mp2",   "*.mp2v",
+            "*.mp4",   "*.mp4v",   "*.mpe",  "*.mpeg", "*.mpeg1", "*.mpeg2",
+            "*.mpeg4", "*.mpg",    "*.mpl",  "*.mpls", "*.mpv",   "*.mpv2",
+            "*.mqv",   "*.mts",    "*.mtv",  "*.mxf",  "*.mxg",   "*.nsv",
+            "*.nuv",   "*.ogm",    "*.ogv",  "*.ogx",  "*.ps",    "*.qt",
+            "*.qtvr",  "*.ram",    "*.rec",  "*.rm",   "*.rmj",   "*.rmm",
+            "*.rms",   "*.rmvb",   "*.rmx",  "*.rp",   "*.rpl",   "*.rv",
+            "*.rvx",   "*.thp",    "*.tod",  "*.tp",   "*.trp",   "*.ts",
+            "*.tts",   "*.txd",    "*.vcd",  "*.vdr",  "*.vob",   "*.vp8",
+            "*.vro",   "*.webm",   "*.wm",   "*.wmv",  "*.wtv",   "*.xesc",
+            "*.xspf"};
     }
     [[nodiscard]] QStringList audioSuffixes() const {
-        return QStringList{QLatin1String("*.mp3"),  QLatin1String("*.aac"),
-                           QLatin1String("*.mka"),  QLatin1String("*.dts"),
-                           QLatin1String("*.flac"), QLatin1String("*.ogg"),
-                           QLatin1String("*.m4a"),  QLatin1String("*.ac3"),
-                           QLatin1String("*.opus"), QLatin1String("*.wav"),
-                           QLatin1String("*.wv")};
+        return QStringList{"*.mp3",  "*.aac", "*.mka", "*.dts",
+                           "*.flac", "*.ogg", "*.m4a", "*.ac3",
+                           "*.opus", "*.wav", "*.wv"};
     }
     [[nodiscard]] QStringList subtitleSuffixes() const {
-        return QStringList{QLatin1String("*.utf"),   QLatin1String("*.utf8"),
-                           QLatin1String("*.utf-8"), QLatin1String("*.idx"),
-                           QLatin1String("*.sub"),   QLatin1String("*.srt"),
-                           QLatin1String("*.rt"),    QLatin1String("*.ssa"),
-                           QLatin1String("*.ass"),   QLatin1String("*.mks"),
-                           QLatin1String("*.vtt"),   QLatin1String("*.sup"),
-                           QLatin1String("*.scc"),   QLatin1String("*.smi")};
+        return QStringList{"*.utf", "*.utf8", "*.utf-8", "*.idx", "*.sub",
+                           "*.srt", "*.rt",   "*.ssa",   "*.ass", "*.mks",
+                           "*.vtt", "*.sup",  "*.scc",   "*.smi"};
     }
     // Chapter list
     [[nodiscard]] MpvDeclarativeObject::Chapters chapters() const;
@@ -482,9 +444,9 @@ private Q_SLOTS:
 
 private:
     bool mpvSendCommand(const QVariant &arguments);
-    bool mpvSetProperty(const QString &name, const QVariant &value);
-    QVariant mpvGetProperty(const QString &name, bool *ok = nullptr) const;
-    bool mpvObserveProperty(const QString &name);
+    bool mpvSetProperty(const char *name, const QVariant &value);
+    QVariant mpvGetProperty(const char *name, bool *ok = nullptr) const;
+    bool mpvObserveProperty(const char *name);
 
     void processMpvLogMessage(mpv_event_log_message *event);
     void processMpvPropertyChange(mpv_event_property *event);
@@ -568,11 +530,9 @@ private:
     // These properties are changing all the time during the playback process.
     // So we have to add them to the black list, otherwise we'll get huge
     // message floods.
-    const QStringList propertyBlackList = {
-        QLatin1String("time-pos"),      QLatin1String("playback-time"),
-        QLatin1String("percent-pos"),   QLatin1String("video-bitrate"),
-        QLatin1String("audio-bitrate"), QLatin1String("estimated-vf-fps"),
-        QLatin1String("avsync")};
+    const QVector<const char *> propertyBlackList = {
+        "time-pos",      "playback-time",    "percent-pos", "video-bitrate",
+        "audio-bitrate", "estimated-vf-fps", "avsync"};
 
 Q_SIGNALS:
     void onUpdate();

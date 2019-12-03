@@ -57,7 +57,7 @@ public:
                 {MPV_RENDER_PARAM_INVALID, nullptr},
                 {MPV_RENDER_PARAM_INVALID, nullptr}};
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-            if (QGuiApplication::platformName().contains(QLatin1String("xcb"),
+            if (QGuiApplication::platformName().contains("xcb",
                                                          Qt::CaseInsensitive)) {
                 params[2].type = MPV_RENDER_PARAM_X11_DISPLAY;
                 params[2].data = QX11Info::display();
@@ -82,11 +82,12 @@ public:
         m_mpvDeclarativeObject->window()->resetOpenGLState();
 
         QOpenGLFramebufferObject *fbo = framebufferObject();
-        mpv_opengl_fbo mpfbo{0, 0, 0, 0};
+        mpv_opengl_fbo mpfbo;
         mpfbo.fbo = static_cast<int>(fbo->handle());
         mpfbo.w = fbo->width();
         mpfbo.h = fbo->height();
-        int flip_y{0};
+        mpfbo.internal_format = 0;
+        int flip_y = 0;
 
         mpv_render_param params[] = {
             // Specify the default framebuffer (0) as target. This will
@@ -113,14 +114,14 @@ MpvDeclarativeObject::MpvDeclarativeObject(QQuickItem *parent)
       mpv(mpv::qt::Handle::FromRawHandle(mpv_create())) {
     Q_ASSERT(mpv != nullptr);
 
-    mpvSetProperty(QLatin1String("input-default-bindings"), false);
-    mpvSetProperty(QLatin1String("input-vo-keyboard"), false);
-    mpvSetProperty(QLatin1String("input-cursor"), false);
-    mpvSetProperty(QLatin1String("cursor-autohide"), false);
+    mpvSetProperty("input-default-bindings", false);
+    mpvSetProperty("input-vo-keyboard", false);
+    mpvSetProperty("input-cursor", false);
+    mpvSetProperty("cursor-autohide", false);
 
     auto iterator = properties.constBegin();
     while (iterator != properties.constEnd()) {
-        mpvObserveProperty(QLatin1String(iterator.key()));
+        mpvObserveProperty(iterator.key());
         ++iterator;
     }
 
@@ -156,44 +157,38 @@ void MpvDeclarativeObject::on_update(void *ctx) {
 void MpvDeclarativeObject::doUpdate() { update(); }
 
 void MpvDeclarativeObject::processMpvLogMessage(mpv_event_log_message *event) {
-    const QString logMessage =
-        QStringLiteral("[libmpv] %1: %2")
-            .arg(QString::fromUtf8(event->prefix),
-                 QString::fromUtf8(event->text).trimmed());
     switch (event->log_level) {
     case MPV_LOG_LEVEL_V:
     case MPV_LOG_LEVEL_DEBUG:
     case MPV_LOG_LEVEL_TRACE:
-        qDebug().noquote() << logMessage;
+        qDebug().noquote() << event->text;
         break;
     case MPV_LOG_LEVEL_WARN:
-        qWarning().noquote() << logMessage;
+        qWarning().noquote() << event->text;
         break;
     case MPV_LOG_LEVEL_ERROR:
-        qCritical().noquote() << logMessage;
+        qCritical().noquote() << event->text;
         break;
     case MPV_LOG_LEVEL_FATAL:
         // qFatal() doesn't support the "<<" operator.
-        qFatal("%ls", qUtf16Printable(logMessage));
+        qFatal("%s", event->text);
         break;
     case MPV_LOG_LEVEL_INFO:
-        qInfo().noquote() << logMessage;
+        qInfo().noquote() << event->text;
         break;
     default:
-        qDebug().noquote() << logMessage;
+        qDebug().noquote() << event->text;
         break;
     }
 }
 
 void MpvDeclarativeObject::processMpvPropertyChange(mpv_event_property *event) {
-    const char *eventName = event->name;
-    if (!propertyBlackList.contains(QString::fromUtf8(eventName),
-                                    Qt::CaseInsensitive)) {
+    if (!propertyBlackList.contains(event->name)) {
         qDebug().noquote() << "[libmpv] Property changed from mpv:"
-                           << eventName;
+                           << event->name;
     }
-    if (properties.contains(eventName)) {
-        const auto signalName = properties.value(eventName);
+    if (properties.contains(event->name)) {
+        const auto signalName = properties.value(event->name);
         if (signalName != nullptr) {
             QMetaObject::invokeMethod(this, signalName);
         }
@@ -262,9 +257,9 @@ bool MpvDeclarativeObject::mpvSendCommand(const QVariant &arguments) {
     return (errorCode >= 0);
 }
 
-bool MpvDeclarativeObject::mpvSetProperty(const QString &name,
+bool MpvDeclarativeObject::mpvSetProperty(const char *name,
                                           const QVariant &value) {
-    if (name.isEmpty() || value.isNull() || !value.isValid()) {
+    if ((name == nullptr) || value.isNull() || !value.isValid()) {
         return false;
     }
     qDebug().noquote() << "Setting a property for mpv:" << name
@@ -281,12 +276,12 @@ bool MpvDeclarativeObject::mpvSetProperty(const QString &name,
     return (errorCode >= 0);
 }
 
-QVariant MpvDeclarativeObject::mpvGetProperty(const QString &name,
+QVariant MpvDeclarativeObject::mpvGetProperty(const char *name,
                                               bool *ok) const {
     if (ok != nullptr) {
         *ok = false;
     }
-    if (name.isEmpty()) {
+    if (name == nullptr) {
         return QVariant();
     }
     const QVariant result = mpv::qt::get_property(mpv, name);
@@ -296,8 +291,7 @@ QVariant MpvDeclarativeObject::mpvGetProperty(const QString &name,
         if (ok != nullptr) {
             *ok = true;
         }
-        /*if ((name != QLatin1String("time-pos")) &&
-            (name != QLatin1String("duration"))) {
+        /*if ((name != "time-pos") && (name != "duration")) {
             qDebug().noquote() << "Querying a property from mpv:"
                                << name << "result:" << result;
         }*/
@@ -305,13 +299,12 @@ QVariant MpvDeclarativeObject::mpvGetProperty(const QString &name,
     return result;
 }
 
-bool MpvDeclarativeObject::mpvObserveProperty(const QString &name) {
-    if (name.isEmpty()) {
+bool MpvDeclarativeObject::mpvObserveProperty(const char *name) {
+    if (name == nullptr) {
         return false;
     }
     qDebug().noquote() << "Observing a property from mpv:" << name;
-    const int errorCode = mpv_observe_property(
-        mpv, 0, name.toUtf8().constData(), MPV_FORMAT_NONE);
+    const int errorCode = mpv_observe_property(mpv, 0, name, MPV_FORMAT_NONE);
     if (errorCode < 0) {
         qWarning().noquote()
             << "Failed to observe a property from mpv:" << name;
@@ -331,17 +324,15 @@ QUrl MpvDeclarativeObject::source() const {
 }
 
 QString MpvDeclarativeObject::fileName() const {
-    return isStopped() ? QString()
-                       : mpvGetProperty(QLatin1String("filename")).toString();
+    return isStopped() ? QString() : mpvGetProperty("filename").toString();
 }
 
 QSize MpvDeclarativeObject::videoSize() const {
     if (isStopped()) {
         return QSize();
     }
-    QSize size(
-        qMax(mpvGetProperty(QLatin1String("video-out-params/dw")).toInt(), 0),
-        qMax(mpvGetProperty(QLatin1String("video-out-params/dh")).toInt(), 0));
+    QSize size(qMax(mpvGetProperty("video-out-params/dw").toInt(), 0),
+               qMax(mpvGetProperty("video-out-params/dh").toInt(), 0));
     const int rotate = videoRotate();
     if ((rotate == 90) || (rotate == 270)) {
         size.transpose();
@@ -351,8 +342,8 @@ QSize MpvDeclarativeObject::videoSize() const {
 
 MpvDeclarativeObject::PlaybackState
 MpvDeclarativeObject::playbackState() const {
-    const bool stopped = mpvGetProperty(QLatin1String("idle-active")).toBool();
-    const bool paused = mpvGetProperty(QLatin1String("pause")).toBool();
+    const bool stopped = mpvGetProperty("idle-active").toBool();
+    const bool paused = mpvGetProperty("pause").toBool();
     return stopped ? PlaybackState::Stopped
                    : (paused ? PlaybackState::Paused : PlaybackState::Playing);
 }
@@ -362,32 +353,30 @@ MpvDeclarativeObject::MediaStatus MpvDeclarativeObject::mediaStatus() const {
 }
 
 MpvDeclarativeObject::LogLevel MpvDeclarativeObject::logLevel() const {
-    const QString level = mpvGetProperty(QLatin1String("msg-level")).toString();
-    if (level.isEmpty() || (level == QLatin1String("no")) ||
-        (level == QLatin1String("off"))) {
+    const QString level = mpvGetProperty("msg-level").toString();
+    if (level.isEmpty() || (level == "no") || (level == "off")) {
         return LogLevel::Off;
     }
     const QString actualLevel =
-        level.right(level.length() - level.lastIndexOf(QLatin1Char('=')) - 1);
-    if (actualLevel.isEmpty() || (actualLevel == QLatin1String("no")) ||
-        (actualLevel == QLatin1String("off"))) {
+        level.right(level.length() - level.lastIndexOf('=') - 1);
+    if (actualLevel.isEmpty() || (actualLevel == "no") ||
+        (actualLevel == "off")) {
         return LogLevel::Off;
     }
-    if ((actualLevel == QLatin1String("v")) ||
-        (actualLevel == QLatin1String("debug")) ||
-        (actualLevel == QLatin1String("trace"))) {
+    if ((actualLevel == "v") || (actualLevel == "debug") ||
+        (actualLevel == "trace")) {
         return LogLevel::Debug;
     }
-    if (actualLevel == QLatin1String("warn")) {
+    if (actualLevel == "warn") {
         return LogLevel::Warning;
     }
-    if (actualLevel == QLatin1String("error")) {
+    if (actualLevel == "error") {
         return LogLevel::Critical;
     }
-    if (actualLevel == QLatin1String("fatal")) {
+    if (actualLevel == "fatal") {
         return LogLevel::Fatal;
     }
-    if (actualLevel == QLatin1String("info")) {
+    if (actualLevel == "info") {
         return LogLevel::Info;
     }
     return LogLevel::Debug;
@@ -396,78 +385,71 @@ MpvDeclarativeObject::LogLevel MpvDeclarativeObject::logLevel() const {
 qint64 MpvDeclarativeObject::duration() const {
     return isStopped()
         ? 0
-        : qMax(mpvGetProperty(QLatin1String("duration")).toLongLong(),
-               qint64(0));
+        : qMax(mpvGetProperty("duration").toLongLong(), qint64(0));
 }
 
 qint64 MpvDeclarativeObject::position() const {
     return isStopped()
         ? 0
-        : qBound(qint64(0),
-                 mpvGetProperty(QLatin1String("time-pos")).toLongLong(),
+        : qBound(qint64(0), mpvGetProperty("time-pos").toLongLong(),
                  duration());
 }
 
 int MpvDeclarativeObject::volume() const {
-    return qBound(0, mpvGetProperty(QLatin1String("volume")).toInt(), 100);
+    return qBound(0, mpvGetProperty("volume").toInt(), 100);
 }
 
 bool MpvDeclarativeObject::mute() const {
-    return mpvGetProperty(QLatin1String("mute")).toBool();
+    return mpvGetProperty("mute").toBool();
 }
 
 bool MpvDeclarativeObject::seekable() const {
-    return isStopped() ? false
-                       : mpvGetProperty(QLatin1String("seekable")).toBool();
+    return isStopped() ? false : mpvGetProperty("seekable").toBool();
 }
 
 QString MpvDeclarativeObject::mediaTitle() const {
-    return isStopped()
-        ? QString()
-        : mpvGetProperty(QLatin1String("media-title")).toString();
+    return isStopped() ? QString() : mpvGetProperty("media-title").toString();
 }
 
 QString MpvDeclarativeObject::hwdec() const {
     // Querying "hwdec" itself will return empty string.
-    return mpvGetProperty(QLatin1String("hwdec-current")).toString();
+    return mpvGetProperty("hwdec-current").toString();
 }
 
 QString MpvDeclarativeObject::mpvVersion() const {
-    return mpvGetProperty(QLatin1String("mpv-version")).toString();
+    return mpvGetProperty("mpv-version").toString();
 }
 
 QString MpvDeclarativeObject::mpvConfiguration() const {
-    return mpvGetProperty(QLatin1String("mpv-configuration")).toString();
+    return mpvGetProperty("mpv-configuration").toString();
 }
 
 QString MpvDeclarativeObject::ffmpegVersion() const {
-    return mpvGetProperty(QLatin1String("ffmpeg-version")).toString();
+    return mpvGetProperty("ffmpeg-version").toString();
 }
 
 QString MpvDeclarativeObject::qtVersion() const {
     // qVersion(): run-time Qt version
     // QT_VERSION_STR: Qt version against which the application is compiled
-    return QLatin1String(qVersion());
+    return qVersion();
 }
 
 int MpvDeclarativeObject::vid() const {
-    return isStopped() ? 0 : mpvGetProperty(QLatin1String("vid")).toInt();
+    return isStopped() ? 0 : mpvGetProperty("vid").toInt();
 }
 
 int MpvDeclarativeObject::aid() const {
-    return isStopped() ? 0 : mpvGetProperty(QLatin1String("aid")).toInt();
+    return isStopped() ? 0 : mpvGetProperty("aid").toInt();
 }
 
 int MpvDeclarativeObject::sid() const {
-    return isStopped() ? 0 : mpvGetProperty(QLatin1String("sid")).toInt();
+    return isStopped() ? 0 : mpvGetProperty("sid").toInt();
 }
 
 int MpvDeclarativeObject::videoRotate() const {
     return isStopped()
         ? 0
-        : qMin((qMax(mpvGetProperty(QLatin1String("video-out-params/rotate"))
-                         .toInt(),
-                     0) +
+        : qMin((qMax(mpvGetProperty("video-out-params/rotate").toInt(), 0) +
                 360) %
                    360,
                359);
@@ -476,126 +458,113 @@ int MpvDeclarativeObject::videoRotate() const {
 qreal MpvDeclarativeObject::videoAspect() const {
     return isStopped()
         ? 1.7777
-        : qMax(
-              mpvGetProperty(QLatin1String("video-out-params/aspect")).toReal(),
-              0.0);
+        : qMax(mpvGetProperty("video-out-params/aspect").toReal(), 0.0);
 }
 
 qreal MpvDeclarativeObject::speed() const {
-    return qMax(mpvGetProperty(QLatin1String("speed")).toReal(), 0.0);
+    return qMax(mpvGetProperty("speed").toReal(), 0.0);
 }
 
 bool MpvDeclarativeObject::deinterlace() const {
-    return mpvGetProperty(QLatin1String("deinterlace")).toBool();
+    return mpvGetProperty("deinterlace").toBool();
 }
 
 bool MpvDeclarativeObject::audioExclusive() const {
-    return mpvGetProperty(QLatin1String("audio-exclusive")).toBool();
+    return mpvGetProperty("audio-exclusive").toBool();
 }
 
 QString MpvDeclarativeObject::audioFileAuto() const {
-    return mpvGetProperty(QLatin1String("audio-file-auto")).toString();
+    return mpvGetProperty("audio-file-auto").toString();
 }
 
 QString MpvDeclarativeObject::subAuto() const {
-    return mpvGetProperty(QLatin1String("sub-auto")).toString();
+    return mpvGetProperty("sub-auto").toString();
 }
 
 QString MpvDeclarativeObject::subCodepage() const {
-    QString codePage = mpvGetProperty(QLatin1String("sub-codepage")).toString();
-    if (codePage.startsWith(QLatin1Char('+'))) {
+    QString codePage = mpvGetProperty("sub-codepage").toString();
+    if (codePage.startsWith('+')) {
         codePage.remove(0, 1);
     }
     return codePage;
 }
 
 QString MpvDeclarativeObject::vo() const {
-    return mpvGetProperty(QLatin1String("vo")).toString();
+    return mpvGetProperty("vo").toString();
 }
 
 QString MpvDeclarativeObject::ao() const {
-    return mpvGetProperty(QLatin1String("ao")).toString();
+    return mpvGetProperty("ao").toString();
 }
 
 QString MpvDeclarativeObject::screenshotFormat() const {
-    return mpvGetProperty(QLatin1String("screenshot-format")).toString();
+    return mpvGetProperty("screenshot-format").toString();
 }
 
 bool MpvDeclarativeObject::screenshotTagColorspace() const {
-    return mpvGetProperty(QLatin1String("screenshot-tag-colorspace")).toBool();
+    return mpvGetProperty("screenshot-tag-colorspace").toBool();
 }
 
 int MpvDeclarativeObject::screenshotPngCompression() const {
-    return qBound(
-        0, mpvGetProperty(QLatin1String("screenshot-png-compression")).toInt(),
-        9);
+    return qBound(0, mpvGetProperty("screenshot-png-compression").toInt(), 9);
 }
 
 int MpvDeclarativeObject::screenshotJpegQuality() const {
-    return qBound(
-        0, mpvGetProperty(QLatin1String("screenshot-jpeg-quality")).toInt(),
-        100);
+    return qBound(0, mpvGetProperty("screenshot-jpeg-quality").toInt(), 100);
 }
 
 QString MpvDeclarativeObject::screenshotTemplate() const {
-    return mpvGetProperty(QLatin1String("screenshot-template")).toString();
+    return mpvGetProperty("screenshot-template").toString();
 }
 
 QString MpvDeclarativeObject::screenshotDirectory() const {
-    return mpvGetProperty(QLatin1String("screenshot-directory")).toString();
+    return mpvGetProperty("screenshot-directory").toString();
 }
 
 QString MpvDeclarativeObject::profile() const {
-    return mpvGetProperty(QLatin1String("profile")).toString();
+    return mpvGetProperty("profile").toString();
 }
 
 bool MpvDeclarativeObject::hrSeek() const {
-    return mpvGetProperty(QLatin1String("hr-seek")).toBool();
+    return mpvGetProperty("hr-seek").toBool();
 }
 
 bool MpvDeclarativeObject::ytdl() const {
-    return mpvGetProperty(QLatin1String("ytdl")).toBool();
+    return mpvGetProperty("ytdl").toBool();
 }
 
 bool MpvDeclarativeObject::loadScripts() const {
-    return mpvGetProperty(QLatin1String("load-scripts")).toBool();
+    return mpvGetProperty("load-scripts").toBool();
 }
 
 QString MpvDeclarativeObject::path() const {
-    return isStopped() ? QString()
-                       : mpvGetProperty(QLatin1String("path")).toString();
+    return isStopped() ? QString() : mpvGetProperty("path").toString();
 }
 
 QString MpvDeclarativeObject::fileFormat() const {
-    return isStopped()
-        ? QString()
-        : mpvGetProperty(QLatin1String("file-format")).toString();
+    return isStopped() ? QString() : mpvGetProperty("file-format").toString();
 }
 
 qint64 MpvDeclarativeObject::fileSize() const {
     return isStopped()
         ? 0
-        : qMax(mpvGetProperty(QLatin1String("file-size")).toLongLong(),
-               qint64(0));
+        : qMax(mpvGetProperty("file-size").toLongLong(), qint64(0));
 }
 
 qreal MpvDeclarativeObject::videoBitrate() const {
-    return isStopped()
-        ? 0.0
-        : qMax(mpvGetProperty(QLatin1String("video-bitrate")).toReal(), 0.0);
+    return isStopped() ? 0.0
+                       : qMax(mpvGetProperty("video-bitrate").toReal(), 0.0);
 }
 
 qreal MpvDeclarativeObject::audioBitrate() const {
-    return isStopped()
-        ? 0.0
-        : qMax(mpvGetProperty(QLatin1String("audio-bitrate")).toReal(), 0.0);
+    return isStopped() ? 0.0
+                       : qMax(mpvGetProperty("audio-bitrate").toReal(), 0.0);
 }
 
 MpvDeclarativeObject::AudioDevices
 MpvDeclarativeObject::audioDeviceList() const {
     AudioDevices audioDevices;
-    QVariantList deviceList =
-        mpvGetProperty(QLatin1String("audio-device-list")).toList();
+    QVariantList deviceList = mpvGetProperty("audio-device-list").toList();
     for (const auto &device : deviceList) {
         const auto &deviceInfo = device.toMap();
         SingleTrackInfo singleTrackInfo;
@@ -607,9 +576,7 @@ MpvDeclarativeObject::audioDeviceList() const {
 }
 
 QString MpvDeclarativeObject::videoFormat() const {
-    return isStopped()
-        ? QString()
-        : mpvGetProperty(QLatin1String("video-format")).toString();
+    return isStopped() ? QString() : mpvGetProperty("video-format").toString();
 }
 
 MpvDeclarativeObject::MpvCallType MpvDeclarativeObject::mpvCallType() const {
@@ -618,13 +585,11 @@ MpvDeclarativeObject::MpvCallType MpvDeclarativeObject::mpvCallType() const {
 
 MpvDeclarativeObject::MediaTracks MpvDeclarativeObject::mediaTracks() const {
     MediaTracks mediaTracks;
-    QVariantList trackList =
-        mpvGetProperty(QLatin1String("track-list")).toList();
+    QVariantList trackList = mpvGetProperty("track-list").toList();
     for (const auto &track : trackList) {
         const auto &trackInfo = track.toMap();
-        if ((trackInfo["type"] != QLatin1String("video")) &&
-            (trackInfo["type"] != QLatin1String("audio")) &&
-            (trackInfo["type"] != QLatin1String("sub"))) {
+        if ((trackInfo["type"] != "video") && (trackInfo["type"] != "audio") &&
+            (trackInfo["type"] != "sub")) {
             continue;
         }
         SingleTrackInfo singleTrackInfo;
@@ -632,7 +597,7 @@ MpvDeclarativeObject::MediaTracks MpvDeclarativeObject::mediaTracks() const {
         singleTrackInfo["type"] = trackInfo["type"];
         singleTrackInfo["src-id"] = trackInfo["src-id"];
         if (trackInfo["title"].toString().isEmpty()) {
-            if (trackInfo["lang"].toString() != QLatin1String("und")) {
+            if (trackInfo["lang"].toString() != "und") {
                 singleTrackInfo["title"] = trackInfo["lang"];
             } else if (!trackInfo["external"].toBool()) {
                 singleTrackInfo["title"] = "[internal]";
@@ -650,19 +615,19 @@ MpvDeclarativeObject::MediaTracks MpvDeclarativeObject::mediaTracks() const {
         singleTrackInfo["external-filename"] = trackInfo["external-filename"];
         singleTrackInfo["selected"] = trackInfo["selected"];
         singleTrackInfo["decoder-desc"] = trackInfo["decoder-desc"];
-        if (trackInfo["type"] == QLatin1String("video")) {
+        if (trackInfo["type"] == "video") {
             singleTrackInfo["albumart"] = trackInfo["albumart"];
             singleTrackInfo["demux-w"] = trackInfo["demux-w"];
             singleTrackInfo["demux-h"] = trackInfo["demux-h"];
             singleTrackInfo["demux-fps"] = trackInfo["demux-fps"];
             mediaTracks.videoChannels.append(singleTrackInfo);
-        } else if (trackInfo["type"] == QLatin1String("audio")) {
+        } else if (trackInfo["type"] == "audio") {
             singleTrackInfo["demux-channel-count"] =
                 trackInfo["demux-channel-count"];
             singleTrackInfo["demux-channels"] = trackInfo["demux-channels"];
             singleTrackInfo["demux-samplerate"] = trackInfo["demux-samplerate"];
             mediaTracks.audioTracks.append(singleTrackInfo);
-        } else if (trackInfo["type"] == QLatin1String("sub")) {
+        } else if (trackInfo["type"] == "sub") {
             mediaTracks.subtitleStreams.append(singleTrackInfo);
         }
     }
@@ -671,8 +636,7 @@ MpvDeclarativeObject::MediaTracks MpvDeclarativeObject::mediaTracks() const {
 
 MpvDeclarativeObject::Chapters MpvDeclarativeObject::chapters() const {
     Chapters chapters;
-    QVariantList chapterList =
-        mpvGetProperty(QLatin1String("chapter-list")).toList();
+    QVariantList chapterList = mpvGetProperty("chapter-list").toList();
     for (const auto &chapter : chapterList) {
         const auto &chapterInfo = chapter.toMap();
         SingleTrackInfo singleTrackInfo;
@@ -685,7 +649,7 @@ MpvDeclarativeObject::Chapters MpvDeclarativeObject::chapters() const {
 
 MpvDeclarativeObject::Metadata MpvDeclarativeObject::metadata() const {
     Metadata metadata;
-    QVariantMap metadataMap = mpvGetProperty(QLatin1String("metadata")).toMap();
+    QVariantMap metadataMap = mpvGetProperty("metadata").toMap();
     auto iterator = metadataMap.constBegin();
     while (iterator != metadataMap.constEnd()) {
         metadata[iterator.key()] = iterator.value();
@@ -695,21 +659,17 @@ MpvDeclarativeObject::Metadata MpvDeclarativeObject::metadata() const {
 }
 
 qreal MpvDeclarativeObject::avsync() const {
-    return isStopped()
-        ? 0.0
-        : qMax(mpvGetProperty(QLatin1String("avsync")).toReal(), 0.0);
+    return isStopped() ? 0.0 : qMax(mpvGetProperty("avsync").toReal(), 0.0);
 }
 
 int MpvDeclarativeObject::percentPos() const {
-    return isStopped()
-        ? 0
-        : qBound(0, mpvGetProperty(QLatin1String("percent-pos")).toInt(), 100);
+    return isStopped() ? 0
+                       : qBound(0, mpvGetProperty("percent-pos").toInt(), 100);
 }
 
 qreal MpvDeclarativeObject::estimatedVfFps() const {
-    return isStopped()
-        ? 0.0
-        : qMax(mpvGetProperty(QLatin1String("estimated-vf-fps")).toReal(), 0.0);
+    return isStopped() ? 0.0
+                       : qMax(mpvGetProperty("estimated-vf-fps").toReal(), 0.0);
 }
 
 bool MpvDeclarativeObject::open(const QUrl &url) {
@@ -729,7 +689,7 @@ bool MpvDeclarativeObject::play() {
     if (!isPaused() || !currentSource.isValid()) {
         return false;
     }
-    const bool result = mpvSetProperty(QLatin1String("pause"), false);
+    const bool result = mpvSetProperty("pause", false);
     if (result) {
         Q_EMIT playing();
     }
@@ -753,7 +713,7 @@ bool MpvDeclarativeObject::pause() {
     if (!isPlaying()) {
         return false;
     }
-    const bool result = mpvSetProperty(QLatin1String("pause"), true);
+    const bool result = mpvSetProperty("pause", true);
     if (result) {
         Q_EMIT paused();
     }
@@ -776,32 +736,30 @@ bool MpvDeclarativeObject::seek(qint64 value, bool absolute, bool percent) {
     if (isStopped()) {
         return false;
     }
-    QStringList arguments;
-    arguments.append(percent ? "absolute-percent"
-                             : (absolute ? "absolute" : "relative"));
     const qint64 min = (absolute || percent) ? 0 : -position();
     const qint64 max =
         percent ? 100 : (absolute ? duration() : duration() - position());
-    return mpvSendCommand(
-        QVariantList{"seek", qBound(min, value, max), arguments});
+    return mpvSendCommand(QVariantList{
+        "seek", qBound(min, value, max),
+        percent ? "absolute-percent" : (absolute ? "absolute" : "relative")});
 }
 
 bool MpvDeclarativeObject::seekAbsolute(qint64 position) {
-    if (isStopped() || position == this->position()) {
+    if (isStopped() || (position == this->position())) {
         return false;
     }
     return seek(qBound(qint64(0), position, duration()), true);
 }
 
 bool MpvDeclarativeObject::seekRelative(qint64 offset) {
-    if (isStopped() || offset == 0) {
+    if (isStopped() || (offset == 0)) {
         return false;
     }
     return seek(qBound(-position(), offset, duration() - position()));
 }
 
 bool MpvDeclarativeObject::seekPercent(int percent) {
-    if (isStopped() || percent == this->percentPos()) {
+    if (isStopped() || (percent == this->percentPos())) {
         return false;
     }
     return seek(qBound(0, percent, 100), true, true);
@@ -842,7 +800,7 @@ void MpvDeclarativeObject::setMute(bool mute) {
     if (mute == this->mute()) {
         return;
     }
-    mpvSetProperty(QLatin1String("mute"), mute);
+    mpvSetProperty("mute", mute);
 }
 
 void MpvDeclarativeObject::setPlaybackState(
@@ -872,33 +830,32 @@ void MpvDeclarativeObject::setLogLevel(
     if (logLevel == this->logLevel()) {
         return;
     }
-    QString level(QLatin1String("debug"));
+    QString level("debug");
     switch (logLevel) {
     case LogLevel::Off:
-        level = QLatin1String("no");
+        level = "no";
         break;
     case LogLevel::Debug:
         // libmpv's log level: v (verbose) < debug < trace (print all messages)
         // Use "v" to avoid noisy message floods.
-        level = QLatin1String("v");
+        level = "v";
         break;
     case LogLevel::Warning:
-        level = QLatin1String("warn");
+        level = "warn";
         break;
     case LogLevel::Critical:
-        level = QLatin1String("error");
+        level = "error";
         break;
     case LogLevel::Fatal:
-        level = QLatin1String("fatal");
+        level = "fatal";
         break;
     case LogLevel::Info:
-        level = QLatin1String("info");
+        level = "info";
         break;
     }
-    const bool result1 =
-        mpvSetProperty(QLatin1String("terminal"), level != QLatin1String("no"));
-    const bool result2 = mpvSetProperty(QLatin1String("msg-level"),
-                                        QStringLiteral("all=%1").arg(level));
+    const bool result1 = mpvSetProperty("terminal", level != "no");
+    const bool result2 =
+        mpvSetProperty("msg-level", QString("all=%1").arg(level));
     const int result3 =
         mpv_request_log_messages(mpv, level.toUtf8().constData());
     if (result1 && result2 && (result3 >= 0)) {
@@ -909,7 +866,7 @@ void MpvDeclarativeObject::setLogLevel(
 }
 
 void MpvDeclarativeObject::setPosition(qint64 position) {
-    if (isStopped() || position == this->position()) {
+    if (isStopped() || (position == this->position())) {
         return;
     }
     seek(qBound(qint64(0), position, duration()));
@@ -919,119 +876,118 @@ void MpvDeclarativeObject::setVolume(int volume) {
     if (volume == this->volume()) {
         return;
     }
-    mpvSetProperty(QLatin1String("volume"), qBound(0, volume, 100));
+    mpvSetProperty("volume", qBound(0, volume, 100));
 }
 
 void MpvDeclarativeObject::setHwdec(const QString &hwdec) {
-    if (hwdec.isEmpty() || hwdec == this->hwdec()) {
+    if (hwdec.isEmpty() || (hwdec == this->hwdec())) {
         return;
     }
-    mpvSetProperty(QLatin1String("hwdec"), hwdec);
+    mpvSetProperty("hwdec", hwdec);
 }
 
 void MpvDeclarativeObject::setVid(int vid) {
-    if (isStopped() || vid == this->vid()) {
+    if (isStopped() || (vid == this->vid())) {
         return;
     }
-    mpvSetProperty(QLatin1String("vid"), qMax(vid, 0));
+    mpvSetProperty("vid", qMax(vid, 0));
 }
 
 void MpvDeclarativeObject::setAid(int aid) {
-    if (isStopped() || aid == this->aid()) {
+    if (isStopped() || (aid == this->aid())) {
         return;
     }
-    mpvSetProperty(QLatin1String("aid"), qMax(aid, 0));
+    mpvSetProperty("aid", qMax(aid, 0));
 }
 
 void MpvDeclarativeObject::setSid(int sid) {
-    if (isStopped() || sid == this->sid()) {
+    if (isStopped() || (sid == this->sid())) {
         return;
     }
-    mpvSetProperty(QLatin1String("sid"), qMax(sid, 0));
+    mpvSetProperty("sid", qMax(sid, 0));
 }
 
 void MpvDeclarativeObject::setVideoRotate(int videoRotate) {
-    if (isStopped() || videoRotate == this->videoRotate()) {
+    if (isStopped() || (videoRotate == this->videoRotate())) {
         return;
     }
-    mpvSetProperty(QLatin1String("video-rotate"), qBound(0, videoRotate, 359));
+    mpvSetProperty("video-rotate", qBound(0, videoRotate, 359));
 }
 
 void MpvDeclarativeObject::setVideoAspect(qreal videoAspect) {
-    if (isStopped() || videoAspect == this->videoAspect()) {
+    if (isStopped() || (videoAspect == this->videoAspect())) {
         return;
     }
-    mpvSetProperty(QLatin1String("video-aspect"), qMax(videoAspect, 0.0));
+    mpvSetProperty("video-aspect", qMax(videoAspect, 0.0));
 }
 
 void MpvDeclarativeObject::setSpeed(qreal speed) {
-    if (isStopped() || speed == this->speed()) {
+    if (isStopped() || (speed == this->speed())) {
         return;
     }
-    mpvSetProperty(QLatin1String("speed"), qMax(speed, 0.0));
+    mpvSetProperty("speed", qMax(speed, 0.0));
 }
 
 void MpvDeclarativeObject::setDeinterlace(bool deinterlace) {
     if (deinterlace == this->deinterlace()) {
         return;
     }
-    mpvSetProperty(QLatin1String("deinterlace"), deinterlace);
+    mpvSetProperty("deinterlace", deinterlace);
 }
 
 void MpvDeclarativeObject::setAudioExclusive(bool audioExclusive) {
     if (audioExclusive == this->audioExclusive()) {
         return;
     }
-    mpvSetProperty(QLatin1String("audio-exclusive"), audioExclusive);
+    mpvSetProperty("audio-exclusive", audioExclusive);
 }
 
 void MpvDeclarativeObject::setAudioFileAuto(const QString &audioFileAuto) {
-    if (audioFileAuto.isEmpty() || audioFileAuto == this->audioFileAuto()) {
+    if (audioFileAuto.isEmpty() || (audioFileAuto == this->audioFileAuto())) {
         return;
     }
-    mpvSetProperty(QLatin1String("audio-file-auto"), audioFileAuto);
+    mpvSetProperty("audio-file-auto", audioFileAuto);
 }
 
 void MpvDeclarativeObject::setSubAuto(const QString &subAuto) {
-    if (subAuto.isEmpty() || subAuto == this->subAuto()) {
+    if (subAuto.isEmpty() || (subAuto == this->subAuto())) {
         return;
     }
-    mpvSetProperty(QLatin1String("sub-auto"), subAuto);
+    mpvSetProperty("sub-auto", subAuto);
 }
 
 void MpvDeclarativeObject::setSubCodepage(const QString &subCodepage) {
-    if (subCodepage.isEmpty() || subCodepage == this->subCodepage()) {
+    if (subCodepage.isEmpty() || (subCodepage == this->subCodepage())) {
         return;
     }
-    mpvSetProperty(QLatin1String("sub-codepage"),
-                   subCodepage.startsWith(QLatin1Char('+'))
-                       ? subCodepage
-                       : (subCodepage.startsWith("cp")
-                              ? QLatin1Char('+') + subCodepage
-                              : subCodepage));
+    mpvSetProperty(
+        "sub-codepage",
+        subCodepage.startsWith('+')
+            ? subCodepage
+            : (subCodepage.startsWith("cp") ? '+' + subCodepage : subCodepage));
 }
 
 void MpvDeclarativeObject::setVo(const QString &vo) {
-    if (vo.isEmpty() || vo == this->vo()) {
+    if (vo.isEmpty() || (vo == this->vo())) {
         return;
     }
-    mpvSetProperty(QLatin1String("vo"), vo);
+    mpvSetProperty("vo", vo);
 }
 
 void MpvDeclarativeObject::setAo(const QString &ao) {
-    if (ao.isEmpty() || ao == this->ao()) {
+    if (ao.isEmpty() || (ao == this->ao())) {
         return;
     }
-    mpvSetProperty(QLatin1String("ao"), ao);
+    mpvSetProperty("ao", ao);
 }
 
 void MpvDeclarativeObject::setScreenshotFormat(
     const QString &screenshotFormat) {
     if (screenshotFormat.isEmpty() ||
-        screenshotFormat == this->screenshotFormat()) {
+        (screenshotFormat == this->screenshotFormat())) {
         return;
     }
-    mpvSetProperty(QLatin1String("screenshot-format"), screenshotFormat);
+    mpvSetProperty("screenshot-format", screenshotFormat);
 }
 
 void MpvDeclarativeObject::setScreenshotPngCompression(
@@ -1039,30 +995,30 @@ void MpvDeclarativeObject::setScreenshotPngCompression(
     if (screenshotPngCompression == this->screenshotPngCompression()) {
         return;
     }
-    mpvSetProperty(QLatin1String("screenshot-png-compression"),
+    mpvSetProperty("screenshot-png-compression",
                    qBound(0, screenshotPngCompression, 9));
 }
 
 void MpvDeclarativeObject::setScreenshotTemplate(
     const QString &screenshotTemplate) {
     if (screenshotTemplate.isEmpty() ||
-        screenshotTemplate == this->screenshotTemplate()) {
+        (screenshotTemplate == this->screenshotTemplate())) {
         return;
     }
-    mpvSetProperty(QLatin1String("screenshot-template"), screenshotTemplate);
+    mpvSetProperty("screenshot-template", screenshotTemplate);
 }
 
 void MpvDeclarativeObject::setScreenshotDirectory(
     const QString &screenshotDirectory) {
     if (screenshotDirectory.isEmpty() ||
-        screenshotDirectory == this->screenshotDirectory()) {
+        (screenshotDirectory == this->screenshotDirectory())) {
         return;
     }
-    mpvSetProperty(QLatin1String("screenshot-directory"), screenshotDirectory);
+    mpvSetProperty("screenshot-directory", screenshotDirectory);
 }
 
 void MpvDeclarativeObject::setProfile(const QString &profile) {
-    if (profile.isEmpty() || profile == this->profile()) {
+    if (profile.isEmpty() || (profile == this->profile())) {
         return;
     }
     mpvSendCommand(QVariantList{"apply-profile", profile});
@@ -1072,21 +1028,21 @@ void MpvDeclarativeObject::setHrSeek(bool hrSeek) {
     if (hrSeek == this->hrSeek()) {
         return;
     }
-    mpvSetProperty(QLatin1String("hr-seek"), hrSeek ? "yes" : "no");
+    mpvSetProperty("hr-seek", hrSeek ? "yes" : "no");
 }
 
 void MpvDeclarativeObject::setYtdl(bool ytdl) {
     if (ytdl == this->ytdl()) {
         return;
     }
-    mpvSetProperty(QLatin1String("ytdl"), ytdl);
+    mpvSetProperty("ytdl", ytdl);
 }
 
 void MpvDeclarativeObject::setLoadScripts(bool loadScripts) {
     if (loadScripts == this->loadScripts()) {
         return;
     }
-    mpvSetProperty(QLatin1String("load-scripts"), loadScripts);
+    mpvSetProperty("load-scripts", loadScripts);
 }
 
 void MpvDeclarativeObject::setScreenshotTagColorspace(
@@ -1094,15 +1050,14 @@ void MpvDeclarativeObject::setScreenshotTagColorspace(
     if (screenshotTagColorspace == this->screenshotTagColorspace()) {
         return;
     }
-    mpvSetProperty(QLatin1String("screenshot-tag-colorspace"),
-                   screenshotTagColorspace);
+    mpvSetProperty("screenshot-tag-colorspace", screenshotTagColorspace);
 }
 
 void MpvDeclarativeObject::setScreenshotJpegQuality(int screenshotJpegQuality) {
     if (screenshotJpegQuality == this->screenshotJpegQuality()) {
         return;
     }
-    mpvSetProperty(QLatin1String("screenshot-jpeg-quality"),
+    mpvSetProperty("screenshot-jpeg-quality",
                    qBound(0, screenshotJpegQuality, 100));
 }
 
@@ -1116,10 +1071,10 @@ void MpvDeclarativeObject::setMpvCallType(
 }
 
 void MpvDeclarativeObject::setPercentPos(int percentPos) {
-    if (isStopped() || percentPos == this->percentPos()) {
+    if (isStopped() || (percentPos == this->percentPos())) {
         return;
     }
-    mpvSetProperty(QLatin1String("percent-pos"), qBound(0, percentPos, 100));
+    mpvSetProperty("percent-pos", qBound(0, percentPos, 100));
 }
 
 void MpvDeclarativeObject::handleMpvEvents() {

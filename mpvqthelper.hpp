@@ -36,7 +36,6 @@
 #include <cstring>
 
 #include <QHash>
-#include <QList>
 #include <QMetaType>
 #include <QSharedPointer>
 #include <QString>
@@ -282,10 +281,9 @@ static inline bool is_error(const QVariant &v) { return get_error(v) < 0; }
  * @param name the property name
  * @return the property value, or an ErrorReturn with the error code
  */
-static inline QVariant get_property(mpv_handle *ctx, const QString &name) {
+static inline QVariant get_property(mpv_handle *ctx, const char *name) {
     mpv_node node;
-    int err = mpv_get_property(ctx, name.toUtf8().constData(), MPV_FORMAT_NODE,
-                               &node);
+    int err = mpv_get_property(ctx, name, MPV_FORMAT_NODE, &node);
     if (err < 0) {
         return QVariant::fromValue(ErrorReturn(err));
     }
@@ -298,11 +296,10 @@ static inline QVariant get_property(mpv_handle *ctx, const QString &name) {
  *
  * @return mpv error code (<0 on error, >= 0 on success)
  */
-static inline int set_property(mpv_handle *ctx, const QString &name,
+static inline int set_property(mpv_handle *ctx, const char *name,
                                const QVariant &v) {
     node_builder node(v);
-    return mpv_set_property(ctx, name.toUtf8().constData(), MPV_FORMAT_NODE,
-                            node.node());
+    return mpv_set_property(ctx, name, MPV_FORMAT_NODE, node.node());
 }
 
 /**
@@ -311,12 +308,11 @@ static inline int set_property(mpv_handle *ctx, const QString &name,
  *
  * @return mpv error code (<0 on error, >= 0 on success)
  */
-static inline int set_property_async(mpv_handle *ctx, const QString &name,
+static inline int set_property_async(mpv_handle *ctx, const char *name,
                                      const QVariant &v,
                                      quint64 reply_userdata) {
     node_builder node(v);
-    return mpv_set_property_async(ctx, reply_userdata,
-                                  name.toUtf8().constData(), MPV_FORMAT_NODE,
+    return mpv_set_property_async(ctx, reply_userdata, name, MPV_FORMAT_NODE,
                                   node.node());
 }
 
