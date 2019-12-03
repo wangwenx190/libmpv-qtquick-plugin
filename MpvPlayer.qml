@@ -372,13 +372,6 @@ Item {
     property alias ffmpegVersion: mpvObject.ffmpegVersion
 
     /*!
-        \qmlproperty string MpvPlayer::qtVersion
-
-        Return the \b run-time Qt version.
-    */
-    property alias qtVersion: mpvObject.qtVersion
-
-    /*!
         \qmlproperty int MpvPlayer::vid
 
         Select video channel. \c auto selects the default, \c no disables video.

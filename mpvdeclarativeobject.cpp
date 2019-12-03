@@ -428,12 +428,6 @@ QString MpvDeclarativeObject::ffmpegVersion() const {
     return mpvGetProperty("ffmpeg-version").toString();
 }
 
-QString MpvDeclarativeObject::qtVersion() const {
-    // qVersion(): run-time Qt version
-    // QT_VERSION_STR: Qt version against which the application is compiled
-    return qVersion();
-}
-
 int MpvDeclarativeObject::vid() const {
     return isStopped() ? 0 : mpvGetProperty("vid").toInt();
 }

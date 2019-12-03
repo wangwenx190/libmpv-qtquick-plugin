@@ -40,7 +40,6 @@ class MpvDeclarativeObject : public QQuickFramebufferObject {
     Q_PROPERTY(QString mpvVersion READ mpvVersion CONSTANT)
     Q_PROPERTY(QString mpvConfiguration READ mpvConfiguration CONSTANT)
     Q_PROPERTY(QString ffmpegVersion READ ffmpegVersion CONSTANT)
-    Q_PROPERTY(QString qtVersion READ qtVersion CONSTANT)
     Q_PROPERTY(int vid READ vid WRITE setVid NOTIFY vidChanged)
     Q_PROPERTY(int aid READ aid WRITE setAid NOTIFY aidChanged)
     Q_PROPERTY(int sid READ sid WRITE setSid NOTIFY sidChanged)
@@ -200,8 +199,6 @@ public:
     [[nodiscard]] QString mpvConfiguration() const;
     // The contents of the av_version_info() API call
     [[nodiscard]] QString ffmpegVersion() const;
-    // Qt version at run-time
-    [[nodiscard]] QString qtVersion() const;
     // Video channel: --vid=<ID|auto|no>
     [[nodiscard]] int vid() const;
     // Audio track: --aid=<ID|auto|no>
