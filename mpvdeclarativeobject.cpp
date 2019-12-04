@@ -3,6 +3,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QQuickWindow>
+#include <utility>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <QGuiApplication>
 #include <QX11Info>
@@ -559,8 +560,8 @@ MpvDeclarativeObject::AudioDevices
 MpvDeclarativeObject::audioDeviceList() const {
     AudioDevices audioDevices;
     QVariantList deviceList = mpvGetProperty("audio-device-list").toList();
-    for (const auto &device : deviceList) {
-        const auto &deviceInfo = device.toMap();
+    for (auto &&device : std::as_const(deviceList)) {
+        const auto deviceInfo = device.toMap();
         SingleTrackInfo singleTrackInfo;
         singleTrackInfo["name"] = deviceInfo["name"];
         singleTrackInfo["description"] = deviceInfo["description"];
@@ -580,8 +581,8 @@ MpvDeclarativeObject::MpvCallType MpvDeclarativeObject::mpvCallType() const {
 MpvDeclarativeObject::MediaTracks MpvDeclarativeObject::mediaTracks() const {
     MediaTracks mediaTracks;
     QVariantList trackList = mpvGetProperty("track-list").toList();
-    for (const auto &track : trackList) {
-        const auto &trackInfo = track.toMap();
+    for (auto &&track : std::as_const(trackList)) {
+        const auto trackInfo = track.toMap();
         if ((trackInfo["type"] != "video") && (trackInfo["type"] != "audio") &&
             (trackInfo["type"] != "sub")) {
             continue;
@@ -631,8 +632,8 @@ MpvDeclarativeObject::MediaTracks MpvDeclarativeObject::mediaTracks() const {
 MpvDeclarativeObject::Chapters MpvDeclarativeObject::chapters() const {
     Chapters chapters;
     QVariantList chapterList = mpvGetProperty("chapter-list").toList();
-    for (const auto &chapter : chapterList) {
-        const auto &chapterInfo = chapter.toMap();
+    for (auto &&chapter : std::as_const(chapterList)) {
+        const auto chapterInfo = chapter.toMap();
         SingleTrackInfo singleTrackInfo;
         singleTrackInfo["title"] = chapterInfo["title"];
         singleTrackInfo["time"] = chapterInfo["time"];

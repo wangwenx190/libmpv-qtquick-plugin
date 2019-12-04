@@ -1,19 +1,8 @@
 TEMPLATE = lib
-CONFIG += \
-    plugin \
-    warn_on \
-    c11 \
-    strict_c \
-    c++17 \
-    strict_c++ \
-    rtti_off \
-    exceptions_off
+CONFIG += plugin
 TARGET = $$qtLibraryTarget(mpvwrapperplugin)
 QT += quick
 unix: !android: !macx: QT += x11extras
-#DEFINES += \
-#    QT_NO_CAST_FROM_ASCII \
-#    QT_NO_CAST_TO_ASCII
 
 # Qt's QML plugins should be relocatable
 CONFIG += relative_qt_rpath
