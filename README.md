@@ -124,7 +124,7 @@ Before doing anything else, I will assume you have already installed a widely-us
 
    Windows (PowerShell):
 
-   ```ps
+   ```powershell
    New-Item -Path "build" -ItemType "Directory"
    Set-Location -Path "build"
    ```
@@ -190,7 +190,7 @@ Before doing anything else, I will assume you have already installed a widely-us
 
          Windows (PowerShell):
 
-         ```ps
+         ```powershell
          $env:QT_OPENGL="angle"
          ```
 
