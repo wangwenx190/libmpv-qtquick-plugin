@@ -19,12 +19,22 @@ shared {
 }
 # Make sure our plugin is loadable as well for static Qt builds.
 static {
+    # The following line is critical if we are building plugins statically.
+    # Don't remove or modify it if you don't know what you are doing.
     QMAKE_MOC_OPTIONS += -Muri=$$QML_IMPORT_NAME
+    # The "qmldir" file and all .qml files need to be packed into the
+    # static library to let the QML engine be able to load them.
     static_plugin_resources.files = $$PLUGINFILES
-    static_plugin_resources.prefix = /qt-project.org/$$import_path
+    # For static plugins, the root path of all resources must be prefixed by
+    # "/qt-project.org/imports", otherwise the QML engine won't be able to load our resources.
+    # We don't add "/imports" here because the real file's path already includes it.
+    static_plugin_resources.prefix = /qt-project.org
     RESOURCES += static_plugin_resources
     pluginfiles_copy.files = $$import_path/qmldir
-    pluginfiles_install.files = $$OUT_PWD/$$QMLTYPES_FILENAME
+    # Although the "qmldir" file has been packed into the static library,
+    # we still have to put one copy outside, because QMake won't find
+    # our plugin if it's not there.
+    pluginfiles_install.files = $$root_path/$$import_path/qmldir $$OUT_PWD/$$QMLTYPES_FILENAME
 }
 pluginfiles_copy.path = $$DESTDIR
 COPIES += pluginfiles_copy
