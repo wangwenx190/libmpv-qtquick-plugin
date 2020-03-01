@@ -54,7 +54,7 @@ MpvPlayer {
 Notes
 
 - Be aware of the `initFinished` signal. Please refer to the first topic of the [FAQ](#FAQ) section.
-- `MpvPlayer` (defined in [*MpvPlayer.qml*](/MpvPlayer.qml)) is just a simple wrapper of the QML type `MpvObject` (defined in [*mpvdeclarativeobject.h*](/mpvdeclarativeobject.h) and [*mpvdeclarativeobject.cpp*](/mpvdeclarativeobject.cpp)). You can also use `MpvObject` directly if you want. It's usage is exactly the same with `MpvPlayer`.
+- `MpvPlayer` (defined in [*MpvPlayer.qml*](/imports/wangwenx190/QuickMpv/MpvPlayer.qml)) is just a simple wrapper of the QML type `MpvObject` (defined in [*mpvobject.h*](/mpvobject.h) and [*mpvobject.cpp*](/mpvobject.cpp)). You can also use `MpvObject` directly if you want. It's usage is exactly the same with `MpvPlayer`.
 - `mpvPlayer.duration`, `mpvPlayer.position` and `mpvPlayer.seek(offset)` use **SECONDS** instead of milliseconds.
 - `mpvPlayer.seek(offset)` uses relative offset, not absolute position. You can use a negative number to jump backward. If you want to jump to an absolute position, please consider using `mpvPlayer.seekAbsolute(position)` instead. There also exists a method called `mpvPlayer.seekPercent(percent)`, which can jump to a known percent of the playback progress, the parameter *percent* should be an integer between 0 and 100. `mpvPlayer.seekRelative(offset)` is just an alias of `mpvPlayer.seek(offset)`.
 - You can use `mpvPlayer.open(url)` to load and play *url* directly, it is equivalent to `mpvPlayer.source = url` (no need to call `mpvPlayer.play()` manually, because the playback will start immediately once the source url is changed).
@@ -62,7 +62,7 @@ Notes
 - To get the current playback state, use `mpvPlayer.isPlaying()`, `mpvPlayer.isPaused()` and `mpvPlayer.isStopped()`.
 - Qt will load the qml plugins automatically if you have installed them into their correct locations, you don't need to load them manually (and to be honest I don't know how to load them manually either).
 
-For more information, please refer to [*MpvPlayer.qml*](/MpvPlayer.qml).
+For more information, please refer to [*MpvPlayer.qml*](/imports/wangwenx190/QuickMpv/MpvPlayer.qml).
 
 ## Examples
 
@@ -96,7 +96,7 @@ Before doing anything else, I will assume you have already installed a widely-us
    >
    > Static linking is not possible.
 
-   Once everything is ready, then write the following things to a text file named **user.conf** and save it to this repository's directory:
+   Once everything is ready, then write the following things to a text file named **.qmake.conf** and save it to this repository's directory:
 
    ```conf
    # You should replace the "D:/code/mpv-sdk" with your own path.
@@ -196,7 +196,7 @@ Before doing anything else, I will assume you have already installed a widely-us
 
       2. Enable the Qt attribute `Qt::AA_UseOpenGLES` for `Q(Core|Gui)Application`:
 
-         ```qt
+         ```cpp
          QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
          // or: QGuiApplication::setAttribute(Qt::AA_UseOpenGLES);
          ```
@@ -219,7 +219,7 @@ Before doing anything else, I will assume you have already installed a widely-us
    }
    ```
 
-   Note: For more log levels, please refer to [*MpvPlayer.qml*](/MpvPlayer.qml).
+   Note: For more log levels, please refer to [*MpvPlayer.qml*](/imports/wangwenx190/QuickMpv/MpvPlayer.qml).
 - Why my application complaints about failed to create EGL context ... etc at startup and then crashed?
 
    ANGLE only supports OpenGL version <= 3.1. Please check whether you are using OpenGL newer than 3.1 through ANGLE or not.
@@ -228,7 +228,7 @@ Before doing anything else, I will assume you have already installed a widely-us
 
    Here is how to change the OpenGL version in Qt:
 
-   ```qt
+   ```cpp
    QSurfaceFormat surfaceFormat;
    // Here we use OpenGL version 4.6 for instance.
    // Don't use any versions newer than 3.1 if you are using ANGLE.
