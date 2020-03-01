@@ -1,9 +1,0 @@
-naturallanguage = en
-outputencoding = UTF-8
-sourceencoding = UTF-8
-headers.fileextensions = ""
-sources.fileextensions = "*.qml *.qdoc"
-outputdir = doc
-headerdirs = .
-sourcedirs = .
-exampledirs = .

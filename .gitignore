@@ -62,6 +62,10 @@ build.user.bat
 build.user.sh
 user.conf
 [Dd]oc/
+[Dd]ocs/
 Thumbs.db
 *.rc
 *.qm
+*.bin
+*.run
+.qmake.conf
