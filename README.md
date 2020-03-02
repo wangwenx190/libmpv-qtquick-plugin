@@ -64,13 +64,9 @@ Notes
 
 For more information, please refer to [*MpvPlayer.qml*](/imports/wangwenx190/QuickMpv/MpvPlayer.qml).
 
-## Examples
-
-- [**Quick Player**](https://github.com/wangwenx190/quickplayer-test/tree/mpv) (the *mpv* branch) - A simple multimedia player written mostly in QML by myself. It uses this plugin to play media contents. Obviously, it is based on the technology of Qt Quick (UI) and libmpv (multimedia core). Actually, it's a personal experimental repository, just to test some concepts and prototypes.
-
 ## Compilation
 
-Before doing anything else, I will assume you have already installed a widely-used modern C++ compiler (which means your compiler should support at least C++14), a not too old version of Qt and your Qt is configured successfully to use that compiler. All I want to say is that you should have a usable toolchain already. If not, please try to fix it yourself, that's not our topic here.
+Before doing anything else, please make sure you have a compiler that supports at least C++14 and a recent version of Qt.
 
 1. Checkout source code:
 
