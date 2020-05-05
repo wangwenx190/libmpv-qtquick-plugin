@@ -1,11 +1,12 @@
 #pragma once
 
 // Don't use any deprecated APIs from MPV.
-#ifndef MPV_ENABLE_DEPRECATED
-#define MPV_ENABLE_DEPRECATED 0
+#ifdef MPV_ENABLE_DEPRECATED
+#undef MPV_ENABLE_DEPRECATED
 #endif
 
-#include "mpvqthelper.hpp"
+#define MPV_ENABLE_DEPRECATED 0
+
 #include <QHash>
 #include <QQuickFramebufferObject>
 #include <QUrl>
@@ -480,9 +481,9 @@ private Q_SLOTS:
 
 private:
     bool mpvSendCommand(const QVariant &arguments);
-    bool mpvSetProperty(const char *name, const QVariant &value);
-    QVariant mpvGetProperty(const char *name, bool *ok = nullptr) const;
-    bool mpvObserveProperty(const char *name);
+    bool mpvSetProperty(const QString &name, const QVariant &value);
+    QVariant mpvGetProperty(const QString &name, bool *ok = nullptr) const;
+    bool mpvObserveProperty(const QString &name);
 
     void processMpvLogMessage(mpv_event_log_message *event);
     void processMpvPropertyChange(mpv_event_property *event);
@@ -504,7 +505,7 @@ private:
     void playbackStateChangeEvent();
 
 private:
-    mpv::qt::Handle mpv;
+    mpv_handle *mpv = nullptr;
     mpv_render_context *mpv_gl = nullptr;
 
     QUrl currentSource = QUrl();
@@ -512,62 +513,91 @@ private:
     MpvObject::MpvCallType currentMpvCallType =
         MpvObject::MpvCallType::Synchronous;
 
-    const QHash<const char *, const char *> properties = {
-        {"dwidth", "videoSizeChanged"},
-        {"dheight", "videoSizeChanged"},
-        {"duration", "durationChanged"},
-        {"time-pos", "positionChanged"},
-        {"volume", "volumeChanged"},
-        {"mute", "muteChanged"},
-        {"seekable", "seekableChanged"},
-        {"hwdec", "hwdecChanged"},
-        {"vid", "vidChanged"},
-        {"aid", "aidChanged"},
-        {"sid", "sidChanged"},
-        {"video-rotate", "videoRotateChanged"},
-        {"video-aspect", "videoAspectChanged"},
-        {"speed", "speedChanged"},
-        {"deinterlace", "deinterlaceChanged"},
-        {"audio-exclusive", "audioExclusiveChanged"},
-        {"audio-file-auto", "audioFileAutoChanged"},
-        {"sub-auto", "subAutoChanged"},
-        {"sub-codepage", "subCodepageChanged"},
-        {"filename", "fileNameChanged"},
-        {"media-title", "mediaTitleChanged"},
-        {"vo", "voChanged"},
-        {"ao", "aoChanged"},
-        {"screenshot-format", "screenshotFormatChanged"},
-        {"screenshot-png-compression", "screenshotPngCompressionChanged"},
-        {"screenshot-template", "screenshotTemplateChanged"},
-        {"screenshot-directory", "screenshotDirectoryChanged"},
-        {"profile", "profileChanged"},
-        {"hr-seek", "hrSeekChanged"},
-        {"ytdl", "ytdlChanged"},
-        {"load-scripts", "loadScriptsChanged"},
-        {"path", "pathChanged"},
-        {"file-format", "fileFormatChanged"},
-        {"file-size", "fileSizeChanged"},
-        {"video-bitrate", "videoBitrateChanged"},
-        {"audio-bitrate", "audioBitrateChanged"},
-        {"audio-device-list", "audioDeviceListChanged"},
-        {"screenshot-tag-colorspace", "screenshotTagColorspaceChanged"},
-        {"screenshot-jpeg-quality", "screenshotJpegQualityChanged"},
-        {"video-format", "videoFormatChanged"},
-        {"pause", "playbackStateChanged"},
-        {"idle-active", "playbackStateChanged"},
-        {"track-list", "mediaTracksChanged"},
-        {"chapter-list", "chaptersChanged"},
-        {"metadata", "metadataChanged"},
-        {"avsync", "avsyncChanged"},
-        {"percent-pos", "percentPosChanged"},
-        {"estimated-vf-fps", "estimatedVfFpsChanged"}};
+    const QHash<QString, QString> properties = {
+        {QString::fromUtf8("dwidth"), QString::fromUtf8("videoSizeChanged")},
+        {QString::fromUtf8("dheight"), QString::fromUtf8("videoSizeChanged")},
+        {QString::fromUtf8("duration"), QString::fromUtf8("durationChanged")},
+        {QString::fromUtf8("time-pos"), QString::fromUtf8("positionChanged")},
+        {QString::fromUtf8("volume"), QString::fromUtf8("volumeChanged")},
+        {QString::fromUtf8("mute"), QString::fromUtf8("muteChanged")},
+        {QString::fromUtf8("seekable"), QString::fromUtf8("seekableChanged")},
+        {QString::fromUtf8("hwdec"), QString::fromUtf8("hwdecChanged")},
+        {QString::fromUtf8("vid"), QString::fromUtf8("vidChanged")},
+        {QString::fromUtf8("aid"), QString::fromUtf8("aidChanged")},
+        {QString::fromUtf8("sid"), QString::fromUtf8("sidChanged")},
+        {QString::fromUtf8("video-rotate"),
+         QString::fromUtf8("videoRotateChanged")},
+        {QString::fromUtf8("video-aspect"),
+         QString::fromUtf8("videoAspectChanged")},
+        {QString::fromUtf8("speed"), QString::fromUtf8("speedChanged")},
+        {QString::fromUtf8("deinterlace"),
+         QString::fromUtf8("deinterlaceChanged")},
+        {QString::fromUtf8("audio-exclusive"),
+         QString::fromUtf8("audioExclusiveChanged")},
+        {QString::fromUtf8("audio-file-auto"),
+         QString::fromUtf8("audioFileAutoChanged")},
+        {QString::fromUtf8("sub-auto"), QString::fromUtf8("subAutoChanged")},
+        {QString::fromUtf8("sub-codepage"),
+         QString::fromUtf8("subCodepageChanged")},
+        {QString::fromUtf8("filename"), QString::fromUtf8("fileNameChanged")},
+        {QString::fromUtf8("media-title"),
+         QString::fromUtf8("mediaTitleChanged")},
+        {QString::fromUtf8("vo"), QString::fromUtf8("voChanged")},
+        {QString::fromUtf8("ao"), QString::fromUtf8("aoChanged")},
+        {QString::fromUtf8("screenshot-format"),
+         QString::fromUtf8("screenshotFormatChanged")},
+        {QString::fromUtf8("screenshot-png-compression"),
+         QString::fromUtf8("screenshotPngCompressionChanged")},
+        {QString::fromUtf8("screenshot-template"),
+         QString::fromUtf8("screenshotTemplateChanged")},
+        {QString::fromUtf8("screenshot-directory"),
+         QString::fromUtf8("screenshotDirectoryChanged")},
+        {QString::fromUtf8("profile"), QString::fromUtf8("profileChanged")},
+        {QString::fromUtf8("hr-seek"), QString::fromUtf8("hrSeekChanged")},
+        {QString::fromUtf8("ytdl"), QString::fromUtf8("ytdlChanged")},
+        {QString::fromUtf8("load-scripts"),
+         QString::fromUtf8("loadScriptsChanged")},
+        {QString::fromUtf8("path"), QString::fromUtf8("pathChanged")},
+        {QString::fromUtf8("file-format"),
+         QString::fromUtf8("fileFormatChanged")},
+        {QString::fromUtf8("file-size"), QString::fromUtf8("fileSizeChanged")},
+        {QString::fromUtf8("video-bitrate"),
+         QString::fromUtf8("videoBitrateChanged")},
+        {QString::fromUtf8("audio-bitrate"),
+         QString::fromUtf8("audioBitrateChanged")},
+        {QString::fromUtf8("audio-device-list"),
+         QString::fromUtf8("audioDeviceListChanged")},
+        {QString::fromUtf8("screenshot-tag-colorspace"),
+         QString::fromUtf8("screenshotTagColorspaceChanged")},
+        {QString::fromUtf8("screenshot-jpeg-quality"),
+         QString::fromUtf8("screenshotJpegQualityChanged")},
+        {QString::fromUtf8("video-format"),
+         QString::fromUtf8("videoFormatChanged")},
+        {QString::fromUtf8("pause"), QString::fromUtf8("playbackStateChanged")},
+        {QString::fromUtf8("idle-active"),
+         QString::fromUtf8("playbackStateChanged")},
+        {QString::fromUtf8("track-list"),
+         QString::fromUtf8("mediaTracksChanged")},
+        {QString::fromUtf8("chapter-list"),
+         QString::fromUtf8("chaptersChanged")},
+        {QString::fromUtf8("metadata"), QString::fromUtf8("metadataChanged")},
+        {QString::fromUtf8("avsync"), QString::fromUtf8("avsyncChanged")},
+        {QString::fromUtf8("percent-pos"),
+         QString::fromUtf8("percentPosChanged")},
+        {QString::fromUtf8("estimated-vf-fps"),
+         QString::fromUtf8("estimatedVfFpsChanged")}};
 
     // These properties are changing all the time during the playback process.
     // So we have to add them to the black list, otherwise we'll get huge
     // message floods.
-    const QVector<const char *> propertyBlackList = {
-        "time-pos",      "playback-time",    "percent-pos", "video-bitrate",
-        "audio-bitrate", "estimated-vf-fps", "avsync"};
+    const QStringList propertyBlackList = {
+        QString::fromUtf8("time-pos"),
+        QString::fromUtf8("playback-time"),
+        QString::fromUtf8("percent-pos"),
+        QString::fromUtf8("video-bitrate"),
+        QString::fromUtf8("audio-bitrate"),
+        QString::fromUtf8("estimated-vf-fps"),
+        QString::fromUtf8("avsync")};
 
 Q_SIGNALS:
     void onUpdate();

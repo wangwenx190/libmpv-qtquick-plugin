@@ -15,13 +15,12 @@
 
 #pragma once
 
-#ifndef _MPVQTHELPER_HPP
-#define _MPVQTHELPER_HPP
-
 // Don't use any deprecated APIs from MPV.
-#ifndef MPV_ENABLE_DEPRECATED
-#define MPV_ENABLE_DEPRECATED 0
+#ifdef MPV_ENABLE_DEPRECATED
+#undef MPV_ENABLE_DEPRECATED
 #endif
+
+#define MPV_ENABLE_DEPRECATED 0
 
 #include <mpv/client.h>
 
@@ -33,45 +32,11 @@
  * for other languages.
  */
 
-#include <cstring>
-
-#include <QHash>
-#include <QMetaType>
-#include <QSharedPointer>
-#include <QString>
 #include <QVariant>
 
-namespace mpv::qt {
+namespace mpv {
 
-// Wrapper around mpv_handle. Does refcounting under the hood.
-class Handle {
-    struct container {
-        container(mpv_handle *h) : mpv(h) {}
-        ~container() { mpv_terminate_destroy(mpv); }
-        mpv_handle *mpv;
-    };
-    QSharedPointer<container> sptr;
-
-public:
-    // Construct a new Handle from a raw mpv_handle with refcount 1. If the
-    // last Handle goes out of scope, the mpv_handle will be destroyed with
-    // mpv_terminate_destroy().
-    // Never destroy the mpv_handle manually when using this wrapper. You
-    // will create dangling pointers. Just let the wrapper take care of
-    // destroying the mpv_handle.
-    // Never create multiple wrappers from the same raw mpv_handle; copy the
-    // wrapper instead (that's what it's for).
-    static Handle FromRawHandle(mpv_handle *handle) {
-        Handle h;
-        h.sptr = QSharedPointer<container>(new container(handle));
-        return h;
-    }
-
-    // Return the raw handle; for use with the libmpv C API.
-    operator mpv_handle *() const {
-        return sptr != nullptr ? (*sptr).mpv : nullptr;
-    }
-};
+namespace qt {
 
 static inline QVariant node_to_variant(const mpv_node *node) {
     switch (node->format) {
@@ -345,8 +310,8 @@ static inline int command_async(mpv_handle *ctx, const QVariant &args,
     return mpv_command_node_async(ctx, reply_userdata, node.node());
 }
 
-} // namespace mpv::qt
+} // namespace qt
+
+} // namespace mpv
 
 Q_DECLARE_METATYPE(mpv::qt::ErrorReturn)
-
-#endif
