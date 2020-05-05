@@ -248,6 +248,8 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     if (errorCode < 0) {
         qWarning().noquote()
             << "Failed to execute a command for mpv:" << arguments;
+        qWarning().noquote()
+            << "Error message from libmpv:" << mpv_error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -268,6 +270,8 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
     }
     if (errorCode < 0) {
         qWarning().noquote() << "Failed to set a property for mpv:" << name;
+        qWarning().noquote()
+            << "Error message from libmpv:" << mpv_error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -304,6 +308,8 @@ bool MpvObject::mpvObserveProperty(const QString &name) {
     if (errorCode < 0) {
         qWarning().noquote()
             << "Failed to observe a property from mpv:" << name;
+        qWarning().noquote()
+            << "Error message from libmpv:" << mpv_error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -849,6 +855,19 @@ bool MpvObject::screenshotToFile(const QString &filePath) {
     return mpvSendCommand(QVariantList{QString::fromUtf8("screenshot-to-file"),
                                        filePath,
                                        QString::fromUtf8("subtitles")});
+}
+
+bool MpvObject::loadConfigFile(const QString &path) {
+    if (path.isEmpty() || !QFile::exists(path)) {
+        return false;
+    }
+    const int errorCode = mpv_load_config_file(mpv, qUtf8Printable(path));
+    if (errorCode < 0) {
+        qWarning().noquote() << "Failed to load the config file:" << path;
+        qWarning().noquote()
+            << "Error message from libmpv:" << mpv_error_string(errorCode);
+    }
+    return (errorCode >= 0);
 }
 
 void MpvObject::setSource(const QUrl &source) {

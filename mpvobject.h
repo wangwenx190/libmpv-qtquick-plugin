@@ -472,6 +472,9 @@ public Q_SLOTS:
     // According to mpv's manual, the file path must contain an extension
     // name, otherwise the behavior is arbitrary.
     bool screenshotToFile(const QString &filePath);
+    // Loads and parses the config file, and sets every entry in the config
+    // file's default section as if mpv_set_option_string() is called.
+    bool loadConfigFile(const QString &path);
 
 protected Q_SLOTS:
     void handleMpvEvents();
