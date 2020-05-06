@@ -20,13 +20,8 @@ mpv_handle *m_pMpv = nullptr;
 mpv_render_context *m_pMpvGL = nullptr;
 
 QString getLibmpvPath() {
-#ifdef Q_OS_WINDOWS
-    return qEnvironmentVariable(m_libmpvPathEnvVarName,
-                                QString::fromUtf8("mpv"));
-#else
-    return qEnvironmentVariable(m_libmpvPathEnvVarName,
-                                QString::fromUtf8("libmpv"));
-#endif
+    const QString defaultLibPath = QString::fromUtf8("mpv");
+    return qEnvironmentVariable(m_libmpvPathEnvVarName, defaultLibPath);
 }
 
 void wakeup(void *ctx) {
