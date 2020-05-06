@@ -10,8 +10,6 @@
 #include <QHash>
 #include <QQuickFramebufferObject>
 #include <QUrl>
-#include <mpv/client.h>
-#include <mpv/render_gl.h>
 
 class MpvRenderer;
 
@@ -488,8 +486,8 @@ private:
     QVariant mpvGetProperty(const QString &name, bool *ok = nullptr) const;
     bool mpvObserveProperty(const QString &name);
 
-    void processMpvLogMessage(mpv_event_log_message *event);
-    void processMpvPropertyChange(mpv_event_property *event);
+    void processMpvLogMessage(void *event);
+    void processMpvPropertyChange(void *event);
 
     bool isLoaded() const;
     bool isPlaying() const;
@@ -508,9 +506,6 @@ private:
     void playbackStateChangeEvent();
 
 private:
-    mpv_handle *mpv = nullptr;
-    mpv_render_context *mpv_gl = nullptr;
-
     QUrl currentSource = QUrl();
     MpvObject::MediaStatus currentMediaStatus = MpvObject::MediaStatus::NoMedia;
     MpvObject::MpvCallType currentMpvCallType =

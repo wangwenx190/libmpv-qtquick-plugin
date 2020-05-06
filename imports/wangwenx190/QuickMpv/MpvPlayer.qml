@@ -1,4 +1,4 @@
-import QtQuick 2.13
+import QtQuick 2.15
 import wangwenx190.QuickMpv 1.0
 
 /*!
@@ -1150,6 +1150,15 @@ Item {
     */
     function screenshotToFile(path) {
         mpvObject.screenshotToFile(path);
+    }
+
+    /*!
+        \qmlmethod MpvPlayer::loadConfigFile(path)
+
+        Load options from an external config file from \a path.
+    */
+    function loadConfigFile(path) {
+        mpvObject.loadConfigFile(path);
     }
 
     /*!

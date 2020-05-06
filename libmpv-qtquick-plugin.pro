@@ -1,7 +1,7 @@
 TARGET = $$qtLibraryTarget(mpvwrapperplugin)
 QT += quick
 unix: !android: !macx: QT += x11extras
-CONFIG += c++17 strict_c++ warn_on rtti_off exceptions_off utf8_source
+CONFIG += c++17 strict_c++ warn_on rtti_off exceptions_off
 VERSION = 1.0.0.0
 win32: shared {
     QMAKE_TARGET_PRODUCT = "MpvDeclarativeWrapper"
@@ -11,6 +11,7 @@ win32: shared {
     CONFIG += skip_target_version_ext
 }
 DEFINES += MPV_ENABLE_DEPRECATED=0
+dynamic_libmpv: DEFINES += WWX190_DYNAMIC_LIBMPV
 win32: !mingw {
     # You can download shinchiro's libmpv SDK (build from mpv's master branch) from:
     # https://sourceforge.net/projects/mpv-player-windows/files/libmpv/
@@ -27,9 +28,9 @@ win32: !mingw {
         INCLUDEPATH += $$MPV_SDK_DIR/include
         # How to generate .lib files from .def files for MSVC:
         # https://github.com/mpv-player/mpv/blob/master/DOCS/compile-windows.md#linking-libmpv-with-msvc-programs
-        LIBS += -L$$MPV_SDK_DIR -L$$MPV_LIB_DIR -L$$MPV_LIB_DIR_EX -lmpv
+        !dynamic_libmpv: LIBS += -L$$MPV_SDK_DIR -L$$MPV_LIB_DIR -L$$MPV_LIB_DIR_EX -lmpv
     }
-} else {
+} else: !dynamic_libmpv {
     CONFIG += link_pkgconfig
     PKGCONFIG += mpv
 }

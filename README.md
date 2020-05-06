@@ -22,18 +22,24 @@ Once you have installed this plugin successfully, you can use it like any other 
 import QtQuick.Dialogs 1.3
 import wangwenx190.QuickMpv 1.0
 
+Shortcut {
+    sequence: StandardKey.Open
+    onActivated: fileDialog.open()
+}
+
 FileDialog {
     id: fileDialog
 
     title: qsTr("Please select a media file.")
     folder: shortcuts.movies
-    nameFilters: [qsTr("Video files (%1)").arg(mpvPlayer.videoSuffixes.join(' ')), qsTr("Audio files (%1)").arg(mpvPlayer.audioSuffixes.join(' ')), qsTr("All files (*)")
+    nameFilters: [qsTr("Video files (%1)").arg(mpvPlayer.videoSuffixes.join(' ')), qsTr("Audio files (%1)").arg(mpvPlayer.audioSuffixes.join(' ')), qsTr("All files (*)")]
 
     onAccepted: mpvPlayer.source = fileDialog.fileUrl
 }
 
 MpvPlayer {
     id: mpvPlayer
+    anchors.fill: parent
 
     source: "file:///D:/Videos/test.mkv" // playback will start immediately once the source url is changed
     hrSeek: false
