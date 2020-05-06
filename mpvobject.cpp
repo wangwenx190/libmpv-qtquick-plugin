@@ -2,6 +2,7 @@
 
 #include "mpvqthelper.hpp"
 #include <QDebug>
+#include <QDir>
 #include <QFileInfo>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
@@ -13,14 +14,18 @@
 
 namespace {
 
+const char m_libmpvPathEnvVarName[] = "WWX190_LIBMPV_PATH";
+
 mpv_handle *m_pMpv = nullptr;
 mpv_render_context *m_pMpvGL = nullptr;
 
-QString libmpvLocation() {
+QString getLibmpvPath() {
 #ifdef Q_OS_WINDOWS
-    return QString::fromUtf8("mpv");
+    return qEnvironmentVariable(m_libmpvPathEnvVarName,
+                                QString::fromUtf8("mpv"));
 #else
-    return QString::fromUtf8("libmpv");
+    return qEnvironmentVariable(m_libmpvPathEnvVarName,
+                                QString::fromUtf8("libmpv"));
 #endif
 }
 
@@ -121,7 +126,7 @@ private:
 };
 
 MpvObject::MpvObject(QQuickItem *parent) : QQuickFramebufferObject(parent) {
-    Q_ASSERT(mpv::qt::libmpv_init(libmpvLocation()));
+    mpv::qt::libmpv_init(getLibmpvPath());
 
     m_pMpv = mpv::qt::create();
     Q_ASSERT(m_pMpv);
@@ -169,38 +174,45 @@ void MpvObject::doUpdate() { update(); }
 
 void MpvObject::processMpvLogMessage(void *event) {
     const auto e = static_cast<mpv_event_log_message *>(event);
+    const char messagePrefix[] = "[libmpv] [LOG]";
+    // The log message from libmpv contains new line. Remove it.
+    const QString messageText = QString::fromUtf8(e->text).trimmed();
+    const QString message = QString::fromUtf8("%1 %2").arg(
+        QString::fromUtf8(messagePrefix), messageText);
     switch (e->log_level) {
     case MPV_LOG_LEVEL_V:
     case MPV_LOG_LEVEL_DEBUG:
     case MPV_LOG_LEVEL_TRACE:
-        qDebug().noquote() << e->text;
+        qDebug().noquote() << message;
         break;
     case MPV_LOG_LEVEL_WARN:
-        qWarning().noquote() << e->text;
+        qWarning().noquote() << message;
         break;
     case MPV_LOG_LEVEL_ERROR:
-        qCritical().noquote() << e->text;
+        qCritical().noquote() << message;
         break;
     case MPV_LOG_LEVEL_FATAL:
         // qFatal() doesn't support the "<<" operator.
-        qFatal("%s", e->text);
+        qFatal("%s %s", messagePrefix, e->text);
         break;
     case MPV_LOG_LEVEL_INFO:
-        qInfo().noquote() << e->text;
+        qInfo().noquote() << message;
         break;
     default:
-        qDebug().noquote() << e->text;
+        qDebug().noquote() << message;
         break;
     }
 }
 
 void MpvObject::processMpvPropertyChange(void *event) {
     const auto e = static_cast<mpv_event_property *>(event);
-    if (!propertyBlackList.contains(QString::fromUtf8(e->name))) {
-        qDebug().noquote() << "[libmpv] Property changed from mpv:" << e->name;
+    const QString name = QString::fromUtf8(e->name);
+    if (!propertyBlackList.contains(name)) {
+        qDebug().noquote() << "[libmpv] [PROPERTY]" << name << "-->"
+                           << mpvGetProperty(name, true);
     }
-    if (properties.contains(QString::fromUtf8(e->name))) {
-        const QString signalName = properties.value(QString::fromUtf8(e->name));
+    if (properties.contains(name)) {
+        const QString signalName = properties.value(name);
         if (!signalName.isEmpty()) {
             QMetaObject::invokeMethod(this, qUtf8Printable(signalName));
         }
@@ -254,7 +266,8 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     if (arguments.isNull() || !arguments.isValid()) {
         return false;
     }
-    qDebug().noquote() << "Sending a command to mpv:" << arguments;
+    const char messagePrefix[] = "[libmpv] [COMMAND]";
+    qDebug().noquote() << messagePrefix << arguments;
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::command_async(m_pMpv, arguments, 0);
@@ -263,9 +276,8 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     }
     if (errorCode < 0) {
         qWarning().noquote()
-            << "Failed to execute a command for mpv:" << arguments;
-        qWarning().noquote()
-            << "Error message from libmpv:" << mpv::qt::error_string(errorCode);
+            << messagePrefix << "Failed to send command" << arguments << ':'
+            << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -274,36 +286,39 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
     if (name.isEmpty() || value.isNull() || !value.isValid()) {
         return false;
     }
-    qDebug().noquote() << "Setting a property for mpv:" << name
-                       << "to:" << value;
+    const char messagePrefix[] = "[libmpv] [PROPERTY]";
+    qDebug().noquote() << messagePrefix << name << "-->" << value;
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::set_property_async(m_pMpv, name, value, 0);
     } else {
-        errorCode =
-            mpv::qt::get_error(mpv::qt::set_property(m_pMpv, name, value));
+        errorCode = mpv::qt::set_property(m_pMpv, name, value);
     }
     if (errorCode < 0) {
-        qWarning().noquote() << "Failed to set a property for mpv:" << name;
         qWarning().noquote()
-            << "Error message from libmpv:" << mpv::qt::error_string(errorCode);
+            << messagePrefix << "Failed to change property" << name << "to"
+            << value << ':' << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
 
-QVariant MpvObject::mpvGetProperty(const QString &name, bool *ok) const {
+QVariant MpvObject::mpvGetProperty(const QString &name, bool silent,
+                                   bool *ok) const {
     if (ok) {
         *ok = false;
     }
     if (name.isEmpty()) {
         return QVariant();
     }
+    const char messagePrefix[] = "[libmpv] [PROPERTY]";
     const QVariant result = mpv::qt::get_property(m_pMpv, name);
     const int errorCode = mpv::qt::get_error(result);
     if (result.isNull() || !result.isValid() || (errorCode < 0)) {
-        qWarning().noquote() << "Failed to query a property from mpv:" << name;
-        qWarning().noquote()
-            << "Error message from libmpv:" << mpv::qt::error_string(errorCode);
+        if (!silent) {
+            qWarning().noquote()
+                << messagePrefix << "Failed to query property" << name << ':'
+                << mpv::qt::error_string(errorCode);
+        }
     } else {
         if (ok) {
             *ok = true;
@@ -320,13 +335,11 @@ bool MpvObject::mpvObserveProperty(const QString &name) {
     if (name.isEmpty()) {
         return false;
     }
-    qDebug().noquote() << "Observing a property from mpv:" << name;
+    const char messagePrefix[] = "[libmpv] [PROPERTY]";
     const int errorCode = mpv::qt::observe_property(m_pMpv, name, 0);
     if (errorCode < 0) {
-        qWarning().noquote()
-            << "Failed to observe a property from mpv:" << name;
-        qWarning().noquote()
-            << "Error message from libmpv:" << mpv::qt::error_string(errorCode);
+        qWarning().noquote() << messagePrefix << "Failed to observe property"
+                             << name << ':' << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -573,8 +586,10 @@ bool MpvObject::loadScripts() const {
 }
 
 QString MpvObject::path() const {
-    return isStopped() ? QString()
-                       : mpvGetProperty(QString::fromUtf8("path")).toString();
+    return isStopped()
+        ? QString()
+        : QDir::toNativeSeparators(
+              mpvGetProperty(QString::fromUtf8("path")).toString());
 }
 
 QString MpvObject::fileFormat() const {
@@ -878,11 +893,12 @@ bool MpvObject::loadConfigFile(const QString &path) {
     if (path.isEmpty() || !QFileInfo::exists(path)) {
         return false;
     }
+    const char messagePrefix[] = "[libmpv] [MISC]";
     const int errorCode = mpv::qt::load_config_file(m_pMpv, path);
     if (errorCode < 0) {
-        qWarning().noquote() << "Failed to load the config file:" << path;
         qWarning().noquote()
-            << "Error message from libmpv:" << mpv::qt::error_string(errorCode);
+            << messagePrefix << "Failed to load the config file" << path << ':'
+            << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -893,7 +909,8 @@ void MpvObject::setSource(const QUrl &source) {
     }
     const bool result = mpvSendCommand(QVariantList{
         QString::fromUtf8("loadfile"),
-        source.isLocalFile() ? source.toLocalFile() : source.url()});
+        source.isLocalFile() ? QDir::toNativeSeparators(source.toLocalFile())
+                             : source.url()});
     if (result) {
         currentSource = source;
         Q_EMIT sourceChanged();
@@ -960,12 +977,13 @@ void MpvObject::setLogLevel(MpvObject::LogLevel logLevel) {
     const bool result2 = mpvSetProperty(QString::fromUtf8("msg-level"),
                                         QString::fromUtf8("all=%1").arg(level));
     const int errorCode = mpv::qt::request_log_messages(m_pMpv, level);
+    const char messagePrefix[] = "[libmpv] [MISC]";
     if (result1 && result2 && (errorCode >= 0)) {
         Q_EMIT logLevelChanged();
     } else {
-        qWarning().noquote() << "Failed to set log level.";
         qWarning().noquote()
-            << "Error message from libmpv:" << mpv::qt::error_string(errorCode);
+            << messagePrefix << "Failed to change log level to" << level << ':'
+            << mpv::qt::error_string(errorCode);
     }
 }
 
@@ -1023,7 +1041,8 @@ void MpvObject::setVideoAspect(qreal videoAspect) {
     if (isStopped() || (videoAspect == this->videoAspect())) {
         return;
     }
-    mpvSetProperty(QString::fromUtf8("video-aspect"), qMax(videoAspect, 0.0));
+    mpvSetProperty(QString::fromUtf8("video-aspect-override"),
+                   qMax(videoAspect, 0.0));
 }
 
 void MpvObject::setSpeed(qreal speed) {
@@ -1296,8 +1315,9 @@ void MpvObject::handleMpvEvents() {
             break;
         }
         if (shouldOutput) {
-            qDebug().noquote() << "[libmpv] Event received from mpv:"
-                               << mpv::qt::event_name(event->event_id);
+            qDebug().noquote()
+                << "[libmpv] [EVENT]" << mpv::qt::event_name(event->event_id)
+                << "event received.";
         }
     }
 }

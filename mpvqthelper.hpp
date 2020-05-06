@@ -35,67 +35,65 @@
 
 #ifdef WWX190_DYNAMIC_LIBMPV
 #include <QDebug>
-#include <QFileInfo>
 #include <QLibrary>
 #endif
 #include <QVariant>
+
+#ifdef WWX190_DYNAMIC_LIBMPV
+#ifndef WWX190_GENERATE_MPVAPI
+#define WWX190_GENERATE_MPVAPI(funcName, resultType, ...)                      \
+    using _WWX190_MPVAPI_lp_##funcName = resultType (*)(__VA_ARGS__);          \
+    static _WWX190_MPVAPI_lp_##funcName m_lp_##funcName = nullptr;
+#endif
+
+#ifndef WWX190_RESOLVE_MPVAPI
+#define WWX190_RESOLVE_MPVAPI(funcName)                                        \
+    if (!m_lp_##funcName) {                                                    \
+        qDebug().noquote() << "[PLUGIN] [INIT] Loading" << #funcName;          \
+        m_lp_##funcName = reinterpret_cast<_WWX190_MPVAPI_lp_##funcName>(      \
+            library.resolve(#funcName));                                       \
+        Q_ASSERT_X(m_lp_##funcName, __FUNCTION__,                              \
+                   qUtf8Printable(library.errorString()));                     \
+    }
+#endif
+#endif
 
 namespace mpv {
 
 namespace qt {
 
 #ifdef WWX190_DYNAMIC_LIBMPV
-using lp_mpv_get_property = int (*)(mpv_handle *, const char *, mpv_format,
-                                    void *);
-using lp_mpv_set_property = int (*)(mpv_handle *, const char *, mpv_format,
-                                    void *);
-using lp_mpv_set_property_async = int (*)(mpv_handle *, uint64_t, const char *,
-                                          mpv_format, void *);
-using lp_mpv_command_node = int (*)(mpv_handle *, mpv_node *, mpv_node *);
-using lp_mpv_command_node_async = int (*)(mpv_handle *, uint64_t, mpv_node *);
-using lp_mpv_load_config_file = int (*)(mpv_handle *, const char *);
-using lp_mpv_error_string = const char *(*)(int);
-using lp_mpv_observe_property = int (*)(mpv_handle *, uint64_t, const char *,
-                                        mpv_format);
-using lp_mpv_render_context_create = int (*)(mpv_render_context **,
-                                             mpv_handle *, mpv_render_param *);
-using lp_mpv_render_context_set_update_callback = void (*)(mpv_render_context *,
-                                                           mpv_render_update_fn,
-                                                           void *);
-using lp_mpv_render_context_render = int (*)(mpv_render_context *,
-                                             mpv_render_param *);
-using lp_mpv_set_wakeup_callback = void (*)(mpv_handle *, void (*)(void *),
-                                            void *);
-using lp_mpv_initialize = int (*)(mpv_handle *);
-using lp_mpv_render_context_free = void (*)(mpv_render_context *);
-using lp_mpv_terminate_destroy = void (*)(mpv_handle *);
-using lp_mpv_request_log_messages = int (*)(mpv_handle *, const char *);
-using lp_mpv_wait_event = mpv_event *(*)(mpv_handle *, double);
-using lp_mpv_create = mpv_handle *(*)();
-using lp_mpv_event_name = const char *(*)(mpv_event_id);
-using lp_mpv_free_node_contents = void (*)(mpv_node *);
-
-static lp_mpv_get_property m_lp_mpv_get_property = nullptr;
-static lp_mpv_set_property m_lp_mpv_set_property = nullptr;
-static lp_mpv_set_property_async m_lp_mpv_set_property_async = nullptr;
-static lp_mpv_command_node m_lp_mpv_command_node = nullptr;
-static lp_mpv_command_node_async m_lp_mpv_command_node_async = nullptr;
-static lp_mpv_load_config_file m_lp_mpv_load_config_file = nullptr;
-static lp_mpv_error_string m_lp_mpv_error_string = nullptr;
-static lp_mpv_observe_property m_lp_mpv_observe_property = nullptr;
-static lp_mpv_render_context_create m_lp_mpv_render_context_create = nullptr;
-static lp_mpv_render_context_set_update_callback
-    m_lp_mpv_render_context_set_update_callback = nullptr;
-static lp_mpv_render_context_render m_lp_mpv_render_context_render = nullptr;
-static lp_mpv_set_wakeup_callback m_lp_mpv_set_wakeup_callback = nullptr;
-static lp_mpv_initialize m_lp_mpv_initialize = nullptr;
-static lp_mpv_render_context_free m_lp_mpv_render_context_free = nullptr;
-static lp_mpv_terminate_destroy m_lp_mpv_terminate_destroy = nullptr;
-static lp_mpv_request_log_messages m_lp_mpv_request_log_messages = nullptr;
-static lp_mpv_wait_event m_lp_mpv_wait_event = nullptr;
-static lp_mpv_create m_lp_mpv_create = nullptr;
-static lp_mpv_event_name m_lp_mpv_event_name = nullptr;
-static lp_mpv_free_node_contents m_lp_mpv_free_node_contents = nullptr;
+WWX190_GENERATE_MPVAPI(mpv_get_property, int, mpv_handle *, const char *,
+                       mpv_format, void *)
+WWX190_GENERATE_MPVAPI(mpv_set_property, int, mpv_handle *, const char *,
+                       mpv_format, void *)
+WWX190_GENERATE_MPVAPI(mpv_set_property_async, int, mpv_handle *, uint64_t,
+                       const char *, mpv_format, void *)
+WWX190_GENERATE_MPVAPI(mpv_command_node, int, mpv_handle *, mpv_node *,
+                       mpv_node *)
+WWX190_GENERATE_MPVAPI(mpv_command_node_async, int, mpv_handle *, uint64_t,
+                       mpv_node *)
+WWX190_GENERATE_MPVAPI(mpv_load_config_file, int, mpv_handle *, const char *)
+WWX190_GENERATE_MPVAPI(mpv_error_string, const char *, int)
+WWX190_GENERATE_MPVAPI(mpv_observe_property, int, mpv_handle *, uint64_t,
+                       const char *, mpv_format)
+WWX190_GENERATE_MPVAPI(mpv_render_context_create, int, mpv_render_context **,
+                       mpv_handle *, mpv_render_param *)
+WWX190_GENERATE_MPVAPI(mpv_render_context_set_update_callback, void,
+                       mpv_render_context *, mpv_render_update_fn, void *)
+WWX190_GENERATE_MPVAPI(mpv_render_context_render, int, mpv_render_context *,
+                       mpv_render_param *)
+WWX190_GENERATE_MPVAPI(mpv_set_wakeup_callback, void, mpv_handle *,
+                       void (*)(void *), void *)
+WWX190_GENERATE_MPVAPI(mpv_initialize, int, mpv_handle *)
+WWX190_GENERATE_MPVAPI(mpv_render_context_free, void, mpv_render_context *)
+WWX190_GENERATE_MPVAPI(mpv_terminate_destroy, void, mpv_handle *)
+WWX190_GENERATE_MPVAPI(mpv_request_log_messages, int, mpv_handle *,
+                       const char *)
+WWX190_GENERATE_MPVAPI(mpv_wait_event, mpv_event *, mpv_handle *, double)
+WWX190_GENERATE_MPVAPI(mpv_create, mpv_handle *)
+WWX190_GENERATE_MPVAPI(mpv_event_name, const char *, mpv_event_id)
+WWX190_GENERATE_MPVAPI(mpv_free_node_contents, void, mpv_node *)
 #else
 #define m_lp_mpv_get_property mpv_get_property
 #define m_lp_mpv_set_property mpv_set_property
@@ -120,59 +118,33 @@ static lp_mpv_free_node_contents m_lp_mpv_free_node_contents = nullptr;
 #define m_lp_mpv_free_node_contents mpv_free_node_contents
 #endif
 
-static inline bool libmpv_init(const QString &path) {
+static inline void libmpv_init(const QString &path) {
 #ifdef WWX190_DYNAMIC_LIBMPV
-    Q_ASSERT(!path.isEmpty());
     QLibrary library(path);
-    // Q_ASSERT(QFileInfo::exists(library.fileName()));
-    m_lp_mpv_get_property = reinterpret_cast<lp_mpv_get_property>(
-        library.resolve("mpv_get_property"));
-    m_lp_mpv_set_property = reinterpret_cast<lp_mpv_set_property>(
-        library.resolve("mpv_set_property"));
-    m_lp_mpv_set_property_async = reinterpret_cast<lp_mpv_set_property_async>(
-        library.resolve("mpv_set_property_async"));
-    m_lp_mpv_command_node = reinterpret_cast<lp_mpv_command_node>(
-        library.resolve("mpv_command_node"));
-    m_lp_mpv_command_node_async = reinterpret_cast<lp_mpv_command_node_async>(
-        library.resolve("mpv_command_node_async"));
-    m_lp_mpv_load_config_file = reinterpret_cast<lp_mpv_load_config_file>(
-        library.resolve("mpv_load_config_file"));
-    m_lp_mpv_error_string = reinterpret_cast<lp_mpv_error_string>(
-        library.resolve("mpv_error_string"));
-    m_lp_mpv_observe_property = reinterpret_cast<lp_mpv_observe_property>(
-        library.resolve("mpv_observe_property"));
-    m_lp_mpv_render_context_create =
-        reinterpret_cast<lp_mpv_render_context_create>(
-            library.resolve("mpv_render_context_create"));
-    m_lp_mpv_render_context_set_update_callback =
-        reinterpret_cast<lp_mpv_render_context_set_update_callback>(
-            library.resolve("mpv_render_context_set_update_callback"));
-    m_lp_mpv_render_context_render =
-        reinterpret_cast<lp_mpv_render_context_render>(
-            library.resolve("mpv_render_context_render"));
-    m_lp_mpv_set_wakeup_callback = reinterpret_cast<lp_mpv_set_wakeup_callback>(
-        library.resolve("mpv_set_wakeup_callback"));
-    m_lp_mpv_initialize =
-        reinterpret_cast<lp_mpv_initialize>(library.resolve("mpv_initialize"));
-    m_lp_mpv_render_context_free = reinterpret_cast<lp_mpv_render_context_free>(
-        library.resolve("mpv_render_context_free"));
-    m_lp_mpv_terminate_destroy = reinterpret_cast<lp_mpv_terminate_destroy>(
-        library.resolve("mpv_terminate_destroy"));
-    m_lp_mpv_request_log_messages =
-        reinterpret_cast<lp_mpv_request_log_messages>(
-            library.resolve("mpv_request_log_messages"));
-    m_lp_mpv_wait_event =
-        reinterpret_cast<lp_mpv_wait_event>(library.resolve("mpv_wait_event"));
-    m_lp_mpv_create =
-        reinterpret_cast<lp_mpv_create>(library.resolve("mpv_create"));
-    m_lp_mpv_event_name =
-        reinterpret_cast<lp_mpv_event_name>(library.resolve("mpv_event_name"));
-    m_lp_mpv_free_node_contents = reinterpret_cast<lp_mpv_free_node_contents>(
-        library.resolve("mpv_free_node_contents"));
+    qDebug().noquote() << "[PLUGIN] [INIT] libmpv:" << library.fileName();
+    WWX190_RESOLVE_MPVAPI(mpv_get_property)
+    WWX190_RESOLVE_MPVAPI(mpv_set_property)
+    WWX190_RESOLVE_MPVAPI(mpv_set_property_async)
+    WWX190_RESOLVE_MPVAPI(mpv_command_node)
+    WWX190_RESOLVE_MPVAPI(mpv_command_node_async)
+    WWX190_RESOLVE_MPVAPI(mpv_load_config_file)
+    WWX190_RESOLVE_MPVAPI(mpv_error_string)
+    WWX190_RESOLVE_MPVAPI(mpv_observe_property)
+    WWX190_RESOLVE_MPVAPI(mpv_render_context_create)
+    WWX190_RESOLVE_MPVAPI(mpv_render_context_set_update_callback)
+    WWX190_RESOLVE_MPVAPI(mpv_render_context_render)
+    WWX190_RESOLVE_MPVAPI(mpv_set_wakeup_callback)
+    WWX190_RESOLVE_MPVAPI(mpv_initialize)
+    WWX190_RESOLVE_MPVAPI(mpv_render_context_free)
+    WWX190_RESOLVE_MPVAPI(mpv_terminate_destroy)
+    WWX190_RESOLVE_MPVAPI(mpv_request_log_messages)
+    WWX190_RESOLVE_MPVAPI(mpv_wait_event)
+    WWX190_RESOLVE_MPVAPI(mpv_create)
+    WWX190_RESOLVE_MPVAPI(mpv_event_name)
+    WWX190_RESOLVE_MPVAPI(mpv_free_node_contents)
 #else
     Q_UNUSED(path)
 #endif
-    return true;
 }
 
 static inline QVariant node_to_variant(const mpv_node *node) {
@@ -385,8 +357,8 @@ static inline bool is_error(const QVariant &v) { return get_error(v) < 0; }
  */
 static inline QVariant get_property(mpv_handle *ctx, const QString &name) {
     mpv_node node;
-    int err = m_lp_mpv_get_property(ctx, qUtf8Printable(name), MPV_FORMAT_NODE,
-                                    &node);
+    const int err = m_lp_mpv_get_property(ctx, qUtf8Printable(name),
+                                          MPV_FORMAT_NODE, &node);
     if (err < 0) {
         return QVariant::fromValue(ErrorReturn(err));
     }
@@ -430,7 +402,7 @@ static inline int set_property_async(mpv_handle *ctx, const QString &name,
 static inline QVariant command(mpv_handle *ctx, const QVariant &args) {
     node_builder node(args);
     mpv_node res;
-    int err = m_lp_mpv_command_node(ctx, node.node(), &res);
+    const int err = m_lp_mpv_command_node(ctx, node.node(), &res);
     if (err < 0) {
         return QVariant::fromValue(ErrorReturn(err));
     }

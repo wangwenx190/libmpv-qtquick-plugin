@@ -206,11 +206,11 @@ public:
     // Use "video-out-params/rotate" to query this variable
     // video-out-params/rotate = video-params/rotate = video-rotate
     int videoRotate() const;
-    // Video aspect ratio: --video-aspect=<ratio|no>
-    // Eg: --video-aspect=4:3 or --video-aspect=1.3333
-    // Eg: --video-aspect=16:9 or --video-aspect=1.7777
+    // Video aspect ratio: --video-aspect-override=<ratio|no>
+    // Eg: --video-aspect-override=4:3 or --video-aspect-override=1.3333
+    // Eg: --video-aspect-override=16:9 or --video-aspect-override=1.7777
     // Use "video-out-params/aspect" to query this variable.
-    // video-out-params/aspect = video-params/aspect = video-aspect
+    // video-out-params/aspect = video-params/aspect = video-aspect-override
     qreal videoAspect() const;
     // Playback speed: --speed=<0.01-100>
     qreal speed() const;
@@ -483,7 +483,8 @@ private Q_SLOTS:
 private:
     bool mpvSendCommand(const QVariant &arguments);
     bool mpvSetProperty(const QString &name, const QVariant &value);
-    QVariant mpvGetProperty(const QString &name, bool *ok = nullptr) const;
+    QVariant mpvGetProperty(const QString &name, bool silent = false,
+                            bool *ok = nullptr) const;
     bool mpvObserveProperty(const QString &name);
 
     void processMpvLogMessage(void *event);
@@ -525,7 +526,7 @@ private:
         {QString::fromUtf8("sid"), QString::fromUtf8("sidChanged")},
         {QString::fromUtf8("video-rotate"),
          QString::fromUtf8("videoRotateChanged")},
-        {QString::fromUtf8("video-aspect"),
+        {QString::fromUtf8("video-out-params/aspect"),
          QString::fromUtf8("videoAspectChanged")},
         {QString::fromUtf8("speed"), QString::fromUtf8("speedChanged")},
         {QString::fromUtf8("deinterlace"),
