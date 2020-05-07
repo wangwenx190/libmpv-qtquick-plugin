@@ -39,7 +39,13 @@
 #endif
 #include <QVariant>
 
+namespace mpv {
+
+namespace qt {
+
 #ifdef WWX190_DYNAMIC_LIBMPV
+const char messagePrefix_plugin_init[] = "[PLUGIN] [INIT]";
+
 #ifndef WWX190_GENERATE_MPVAPI
 #define WWX190_GENERATE_MPVAPI(funcName, resultType, ...)                      \
     using _WWX190_MPVAPI_lp_##funcName = resultType (*)(__VA_ARGS__);          \
@@ -49,20 +55,15 @@
 #ifndef WWX190_RESOLVE_MPVAPI
 #define WWX190_RESOLVE_MPVAPI(funcName)                                        \
     if (!m_lp_##funcName) {                                                    \
-        qDebug().noquote() << "[PLUGIN] [INIT] Loading" << #funcName;          \
+        qDebug().noquote() << messagePrefix_plugin_init << "Loading"           \
+                           << #funcName;                                       \
         m_lp_##funcName = reinterpret_cast<_WWX190_MPVAPI_lp_##funcName>(      \
             library.resolve(#funcName));                                       \
         Q_ASSERT_X(m_lp_##funcName, __FUNCTION__,                              \
                    qUtf8Printable(library.errorString()));                     \
     }
 #endif
-#endif
 
-namespace mpv {
-
-namespace qt {
-
-#ifdef WWX190_DYNAMIC_LIBMPV
 WWX190_GENERATE_MPVAPI(mpv_get_property, int, mpv_handle *, const char *,
                        mpv_format, void *)
 WWX190_GENERATE_MPVAPI(mpv_set_property, int, mpv_handle *, const char *,
@@ -120,8 +121,14 @@ WWX190_GENERATE_MPVAPI(mpv_free_node_contents, void, mpv_node *)
 
 static inline void libmpv_init(const QString &path) {
 #ifdef WWX190_DYNAMIC_LIBMPV
+    static bool resolved = false;
+    if (resolved) {
+        return;
+    }
+    resolved = true;
     QLibrary library(path);
-    qDebug().noquote() << "[PLUGIN] [INIT] libmpv:" << library.fileName();
+    qDebug().noquote() << messagePrefix_plugin_init
+                       << "libmpv:" << library.fileName();
     WWX190_RESOLVE_MPVAPI(mpv_get_property)
     WWX190_RESOLVE_MPVAPI(mpv_set_property)
     WWX190_RESOLVE_MPVAPI(mpv_set_property_async)

@@ -16,12 +16,18 @@ namespace {
 
 const char m_libmpvPathEnvVarName[] = "WWX190_LIBMPV_PATH";
 
+const char messagePrefix_libmpv_log[] = "[libmpv] [LOG]";
+const char messagePrefix_libmpv_event[] = "[libmpv] [EVENT]";
+const char messagePrefix_libmpv_command[] = "[libmpv] [COMMAND]";
+const char messagePrefix_libmpv_property[] = "[libmpv] [PROPERTY]";
+const char messagePrefix_libmpv_misc[] = "[libmpv] [MISC]";
+
 mpv_handle *m_pMpv = nullptr;
 mpv_render_context *m_pMpvGL = nullptr;
 
 QString getLibmpvPath() {
-    const QString defaultLibPath = QString::fromUtf8("mpv");
-    return qEnvironmentVariable(m_libmpvPathEnvVarName, defaultLibPath);
+    return qEnvironmentVariable(m_libmpvPathEnvVarName,
+                                QString::fromUtf8("mpv"));
 }
 
 void wakeup(void *ctx) {
@@ -169,11 +175,10 @@ void MpvObject::doUpdate() { update(); }
 
 void MpvObject::processMpvLogMessage(void *event) {
     const auto e = static_cast<mpv_event_log_message *>(event);
-    const char messagePrefix[] = "[libmpv] [LOG]";
     // The log message from libmpv contains new line. Remove it.
     const QString messageText = QString::fromUtf8(e->text).trimmed();
     const QString message = QString::fromUtf8("%1 %2").arg(
-        QString::fromUtf8(messagePrefix), messageText);
+        QString::fromUtf8(messagePrefix_libmpv_log), messageText);
     switch (e->log_level) {
     case MPV_LOG_LEVEL_V:
     case MPV_LOG_LEVEL_DEBUG:
@@ -188,7 +193,7 @@ void MpvObject::processMpvLogMessage(void *event) {
         break;
     case MPV_LOG_LEVEL_FATAL:
         // qFatal() doesn't support the "<<" operator.
-        qFatal("%s %s", messagePrefix, e->text);
+        qFatal("%s %s", messagePrefix_libmpv_log, e->text);
         break;
     case MPV_LOG_LEVEL_INFO:
         qInfo().noquote() << message;
@@ -203,7 +208,7 @@ void MpvObject::processMpvPropertyChange(void *event) {
     const auto e = static_cast<mpv_event_property *>(event);
     const QString name = QString::fromUtf8(e->name);
     if (!propertyBlackList.contains(name)) {
-        qDebug().noquote() << "[libmpv] [PROPERTY]" << name << "-->"
+        qDebug().noquote() << messagePrefix_libmpv_property << name << "-->"
                            << mpvGetProperty(name, true);
     }
     if (properties.contains(name)) {
@@ -261,8 +266,7 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     if (arguments.isNull() || !arguments.isValid()) {
         return false;
     }
-    const char messagePrefix[] = "[libmpv] [COMMAND]";
-    qDebug().noquote() << messagePrefix << arguments;
+    qDebug().noquote() << messagePrefix_libmpv_command << arguments;
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::command_async(m_pMpv, arguments, 0);
@@ -271,8 +275,8 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     }
     if (errorCode < 0) {
         qWarning().noquote()
-            << messagePrefix << "Failed to send command" << arguments << ':'
-            << mpv::qt::error_string(errorCode);
+            << messagePrefix_libmpv_command << "Failed to send command"
+            << arguments << ':' << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -281,8 +285,8 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
     if (name.isEmpty() || value.isNull() || !value.isValid()) {
         return false;
     }
-    const char messagePrefix[] = "[libmpv] [PROPERTY]";
-    qDebug().noquote() << messagePrefix << name << "-->" << value;
+    qDebug().noquote() << messagePrefix_libmpv_property << name << "-->"
+                       << value;
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::set_property_async(m_pMpv, name, value, 0);
@@ -291,8 +295,8 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
     }
     if (errorCode < 0) {
         qWarning().noquote()
-            << messagePrefix << "Failed to change property" << name << "to"
-            << value << ':' << mpv::qt::error_string(errorCode);
+            << messagePrefix_libmpv_property << "Failed to change property"
+            << name << "to" << value << ':' << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -305,14 +309,13 @@ QVariant MpvObject::mpvGetProperty(const QString &name, bool silent,
     if (name.isEmpty()) {
         return QVariant();
     }
-    const char messagePrefix[] = "[libmpv] [PROPERTY]";
     const QVariant result = mpv::qt::get_property(m_pMpv, name);
     const int errorCode = mpv::qt::get_error(result);
     if (result.isNull() || !result.isValid() || (errorCode < 0)) {
         if (!silent) {
             qWarning().noquote()
-                << messagePrefix << "Failed to query property" << name << ':'
-                << mpv::qt::error_string(errorCode);
+                << messagePrefix_libmpv_property << "Failed to query property"
+                << name << ':' << mpv::qt::error_string(errorCode);
         }
     } else {
         if (ok) {
@@ -330,11 +333,11 @@ bool MpvObject::mpvObserveProperty(const QString &name) {
     if (name.isEmpty()) {
         return false;
     }
-    const char messagePrefix[] = "[libmpv] [PROPERTY]";
     const int errorCode = mpv::qt::observe_property(m_pMpv, name, 0);
     if (errorCode < 0) {
-        qWarning().noquote() << messagePrefix << "Failed to observe property"
-                             << name << ':' << mpv::qt::error_string(errorCode);
+        qWarning().noquote()
+            << messagePrefix_libmpv_property << "Failed to observe property"
+            << name << ':' << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -888,12 +891,11 @@ bool MpvObject::loadConfigFile(const QString &path) {
     if (path.isEmpty() || !QFileInfo::exists(path)) {
         return false;
     }
-    const char messagePrefix[] = "[libmpv] [MISC]";
     const int errorCode = mpv::qt::load_config_file(m_pMpv, path);
     if (errorCode < 0) {
         qWarning().noquote()
-            << messagePrefix << "Failed to load the config file" << path << ':'
-            << mpv::qt::error_string(errorCode);
+            << messagePrefix_libmpv_misc << "Failed to load the config file"
+            << path << ':' << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -972,13 +974,12 @@ void MpvObject::setLogLevel(MpvObject::LogLevel logLevel) {
     const bool result2 = mpvSetProperty(QString::fromUtf8("msg-level"),
                                         QString::fromUtf8("all=%1").arg(level));
     const int errorCode = mpv::qt::request_log_messages(m_pMpv, level);
-    const char messagePrefix[] = "[libmpv] [MISC]";
     if (result1 && result2 && (errorCode >= 0)) {
         Q_EMIT logLevelChanged();
     } else {
         qWarning().noquote()
-            << messagePrefix << "Failed to change log level to" << level << ':'
-            << mpv::qt::error_string(errorCode);
+            << messagePrefix_libmpv_misc << "Failed to change log level to"
+            << level << ':' << mpv::qt::error_string(errorCode);
     }
 }
 
@@ -1311,8 +1312,8 @@ void MpvObject::handleMpvEvents() {
         }
         if (shouldOutput) {
             qDebug().noquote()
-                << "[libmpv] [EVENT]" << mpv::qt::event_name(event->event_id)
-                << "event received.";
+                << messagePrefix_libmpv_event
+                << mpv::qt::event_name(event->event_id) << "event received.";
         }
     }
 }
