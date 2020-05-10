@@ -31,10 +31,10 @@ win32: !mingw {
         }
         INCLUDEPATH += $$MPV_SDK_DIR/include
         # How to generate the import library file for MSVC:
-        # lib.exe /def:mpv.def /name:mpv-1.dll /out:mpv.lib /MACHINE:X64
+        # lib.exe /def:mpv.def /name:mpv.dll /out:mpv.lib /MACHINE:X64
         !dynamic_libmpv: LIBS += -L$$MPV_SDK_DIR -L$$MPV_LIB_DIR -L$$MPV_LIB_DIR_EX -lmpv
         libmpv.path = $$[QT_INSTALL_BINS]
-        libmpv.files = $$MPV_BIN_DIR/* $$MPV_BIN_DIR_EX/*
+        libmpv.files = $$MPV_BIN_DIR/*.dll $$MPV_BIN_DIR_EX/*.dll
         INSTALLS += libmpv
     }
 } else: !dynamic_libmpv {
