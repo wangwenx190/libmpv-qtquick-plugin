@@ -15,6 +15,7 @@ class MpvRenderer;
 
 class MpvObject : public QQuickFramebufferObject {
     Q_OBJECT
+    QML_ELEMENT
     Q_DISABLE_COPY_MOVE(MpvObject)
 
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
@@ -101,8 +102,6 @@ class MpvObject : public QQuickFramebufferObject {
                    percentPosChanged)
     Q_PROPERTY(
         qreal estimatedVfFps READ estimatedVfFps NOTIFY estimatedVfFpsChanged)
-
-    QML_ELEMENT
 
     friend class MpvRenderer;
 
