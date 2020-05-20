@@ -33,13 +33,8 @@ win32: !mingw {
         # How to generate the import library file for MSVC:
         # lib.exe /def:mpv.def /name:mpv.dll /out:mpv.lib /MACHINE:X64
         !dynamic_libmpv: LIBS += -L$$MPV_SDK_DIR -L$$MPV_LIB_DIR -L$$MPV_LIB_DIR_EX -lmpv
-        win32 {
-            libmpv.path = $$[QT_INSTALL_BINS]
-            libmpv.files = $$MPV_BIN_DIR/*.dll $$MPV_BIN_DIR_EX/*.dll
-        } else: unix {
-            libmpv.path = $$[QT_INSTALL_LIBS]
-            libmpv.files = $$MPV_BIN_DIR/*.so $$MPV_BIN_DIR_EX/*.so
-        }
+        libmpv.path = $$[QT_INSTALL_BINS]
+        libmpv.files = $$MPV_BIN_DIR/*.dll $$MPV_BIN_DIR_EX/*.dll
         INSTALLS += libmpv
     }
 } else: !dynamic_libmpv {
