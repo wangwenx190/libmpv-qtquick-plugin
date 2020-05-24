@@ -3,4 +3,3 @@ plugin mpvwrapperplugin
 classname MpvDeclarativeWrapper
 typeinfo plugins.qmltypes
 MpvPlayer 1.0 MpvPlayer.qml
-designersupported
