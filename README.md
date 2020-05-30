@@ -210,7 +210,3 @@ Before doing anything else, please make sure you have a compiler that supports a
    surfaceFormat.setProfile(QSurfaceFormat::CompatibilityProfile);
    QSurfaceFormat::setDefaultFormat(surfaceFormat);
    ```
-
-## License
-
-[GNU Lesser General Public License version 3](/LICENSE.md)
