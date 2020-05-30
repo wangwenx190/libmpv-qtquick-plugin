@@ -67,6 +67,7 @@ Notes
 - You can also use `mpvPlayer.play()` to resume a paused playback, `mpvPlayer.pause()` to pause a playing playback, `mpvPlayer.stop()` to stop a loaded playback and `mpvPlayer.seek(offset)` to jump to a different position.
 - To get the current playback state, use `mpvPlayer.isPlaying()`, `mpvPlayer.isPaused()` and `mpvPlayer.isStopped()`.
 - Qt will load the qml plugins automatically if you have installed them into their correct locations, you don't need to load them manually (and to be honest I don't know how to load them manually either).
+- If you want to integrate it into your application rather than load it dynamically, the traditional `qmlRegisterType()` function is also supported.
 
 For more information, please refer to [*MpvPlayer.qml*](/imports/wangwenx190/QuickMpv/MpvPlayer.qml).
 
@@ -172,42 +173,11 @@ Before doing anything else, please make sure you have a compiler that supports a
 
 - Why is the playback process not smooth enough or even stuttering?
 
-   If you can insure the video file itself isn't damaged, then here are three possible reasons and their corresponding solutions:
-   1. You are using **desktop OpenGL** or **Mesa llvmpipe** instead of ANGLE.
-
-      Only by using **ANGLE** will your application gets the best performance. There are two official ways to let Qt use ANGLE as it's default backend:
-      1. Set the environment variable `QT_OPENGL` to `angle`, case sensitive:
-
-         Linux:
-
-         ```bash
-         export QT_OPENGL=angle
-         ```
-
-         Windows (cmd):
-
-         ```bat
-         set QT_OPENGL=angle
-         ```
-
-         Windows (PowerShell):
-
-         ```powershell
-         $env:QT_OPENGL="angle"
-         ```
-
-      2. Enable the Qt attribute `Qt::AA_UseOpenGLES` for `Q(Core|Gui)Application`:
-
-         ```cpp
-         QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
-         // or: QGuiApplication::setAttribute(Qt::AA_UseOpenGLES);
-         ```
-
-         Note: You **MUST** do this **BEFORE** the construction of `Q(Core|Gui)Application`!!!
-   2. You are using **software decoding** instead of hardware decoding.
+   If you can insure the video file itself isn't damaged, here are two possible reasons and their corresponding solutions:
+   1. You are using **software decoding** instead of hardware decoding.
 
       libmpv will not enable **hardware decoding** by default. You will have to enable it manually if you need it. Please refer to the previous topic to learn about how to enable it.
-   3. You need a more powerful GPU, maybe even a better CPU. libmpv is never designed to run on too crappy computers.
+   2. You need a more powerful GPU, maybe even a better CPU. libmpv is never designed to run on too crappy computers.
 
 - How to set the log level of libmpv?
 
