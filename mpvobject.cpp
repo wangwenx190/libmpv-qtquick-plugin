@@ -36,15 +36,16 @@
 #include <QX11Info>
 #endif
 
+Q_LOGGING_CATEGORY(lcMpv, "libmpv.general")
+Q_LOGGING_CATEGORY(lcMpvLog, "libmpv.log.general")
+Q_LOGGING_CATEGORY(lcMpvEvent, "libmpv.event.general")
+Q_LOGGING_CATEGORY(lcMpvCommand, "libmpv.command.general")
+Q_LOGGING_CATEGORY(lcMpvProperty, "libmpv.property.general")
+Q_LOGGING_CATEGORY(lcMpvMisc, "libmpv.misc.general")
+
 namespace {
 
 const char m_libmpvPathEnvVarName[] = "WWX190_LIBMPV_PATH";
-
-const char messagePrefix_libmpv_log[] = "[libmpv] [LOG]";
-const char messagePrefix_libmpv_event[] = "[libmpv] [EVENT]";
-const char messagePrefix_libmpv_command[] = "[libmpv] [COMMAND]";
-const char messagePrefix_libmpv_property[] = "[libmpv] [PROPERTY]";
-const char messagePrefix_libmpv_misc[] = "[libmpv] [MISC]";
 
 mpv_handle *m_pMpv = nullptr;
 mpv_render_context *m_pMpvGL = nullptr;
@@ -200,30 +201,28 @@ void MpvObject::doUpdate() { update(); }
 void MpvObject::processMpvLogMessage(void *event) {
     const auto e = static_cast<mpv_event_log_message *>(event);
     // The log message from libmpv contains new line. Remove it.
-    const QString messageText = QString::fromUtf8(e->text).trimmed();
-    const QString message = QString::fromUtf8("%1 %2").arg(
-        QString::fromUtf8(messagePrefix_libmpv_log), messageText);
+    const QString message = QString::fromUtf8(e->text).trimmed();
     switch (e->log_level) {
     case MPV_LOG_LEVEL_V:
     case MPV_LOG_LEVEL_DEBUG:
     case MPV_LOG_LEVEL_TRACE:
-        qDebug().noquote() << message;
+        qCDebug(lcMpvLog).noquote() << message;
         break;
     case MPV_LOG_LEVEL_WARN:
-        qWarning().noquote() << message;
+        qCWarning(lcMpvLog).noquote() << message;
         break;
     case MPV_LOG_LEVEL_ERROR:
-        qCritical().noquote() << message;
+        qCCritical(lcMpvLog).noquote() << message;
         break;
     case MPV_LOG_LEVEL_FATAL:
         // qFatal() doesn't support the "<<" operator.
-        qFatal("%s %s", messagePrefix_libmpv_log, e->text);
+        qFatal("libmpv.log.general %s", e->text);
         break;
     case MPV_LOG_LEVEL_INFO:
-        qInfo().noquote() << message;
+        qCInfo(lcMpvLog).noquote() << message;
         break;
     default:
-        qDebug().noquote() << message;
+        qCDebug(lcMpvLog).noquote() << message;
         break;
     }
 }
@@ -232,8 +231,8 @@ void MpvObject::processMpvPropertyChange(void *event) {
     const auto e = static_cast<mpv_event_property *>(event);
     const QString name = QString::fromUtf8(e->name);
     if (!propertyBlackList.contains(name)) {
-        qDebug().noquote() << messagePrefix_libmpv_property << name << "-->"
-                           << mpvGetProperty(name, true);
+        qCDebug(lcMpvProperty).noquote()
+            << name << "-->" << mpvGetProperty(name, true);
     }
     if (properties.contains(name)) {
         const QString signalName = properties.value(name);
@@ -261,7 +260,7 @@ bool MpvObject::isStopped() const {
     return playbackState() == PlaybackState::Stopped;
 }
 
-void MpvObject::setMediaStatus(MpvObject::MediaStatus mediaStatus) {
+void MpvObject::setMediaStatus(const MpvObject::MediaStatus mediaStatus) {
     if (this->mediaStatus() == mediaStatus) {
         return;
     }
@@ -290,7 +289,7 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     if (arguments.isNull() || !arguments.isValid()) {
         return false;
     }
-    qDebug().noquote() << messagePrefix_libmpv_command << arguments;
+    qCDebug(lcMpvCommand).noquote() << arguments;
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::command_async(m_pMpv, arguments, 0);
@@ -298,9 +297,9 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
         errorCode = mpv::qt::get_error(mpv::qt::command(m_pMpv, arguments));
     }
     if (errorCode < 0) {
-        qWarning().noquote()
-            << messagePrefix_libmpv_command << "Failed to send command"
-            << arguments << ':' << mpv::qt::error_string(errorCode);
+        qCWarning(lcMpvCommand).noquote()
+            << "Failed to send command" << arguments << ':'
+            << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -309,8 +308,7 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
     if (name.isEmpty() || value.isNull() || !value.isValid()) {
         return false;
     }
-    qDebug().noquote() << messagePrefix_libmpv_property << name << "-->"
-                       << value;
+    qCDebug(lcMpvProperty).noquote() << name << "-->" << value;
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::set_property_async(m_pMpv, name, value, 0);
@@ -318,14 +316,14 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
         errorCode = mpv::qt::set_property(m_pMpv, name, value);
     }
     if (errorCode < 0) {
-        qWarning().noquote()
-            << messagePrefix_libmpv_property << "Failed to change property"
-            << name << "to" << value << ':' << mpv::qt::error_string(errorCode);
+        qCWarning(lcMpvProperty).noquote()
+            << "Failed to change property" << name << "to" << value << ':'
+            << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
 
-QVariant MpvObject::mpvGetProperty(const QString &name, bool silent,
+QVariant MpvObject::mpvGetProperty(const QString &name, const bool silent,
                                    bool *ok) const {
     if (ok) {
         *ok = false;
@@ -337,16 +335,16 @@ QVariant MpvObject::mpvGetProperty(const QString &name, bool silent,
     const int errorCode = mpv::qt::get_error(result);
     if (result.isNull() || !result.isValid() || (errorCode < 0)) {
         if (!silent) {
-            qWarning().noquote()
-                << messagePrefix_libmpv_property << "Failed to query property"
-                << name << ':' << mpv::qt::error_string(errorCode);
+            qCWarning(lcMpvProperty).noquote()
+                << "Failed to query property" << name << ':'
+                << mpv::qt::error_string(errorCode);
         }
     } else {
         if (ok) {
             *ok = true;
         }
         /*if ((name != "time-pos") && (name != "duration")) {
-            qDebug().noquote() << "Querying a property from mpv:"
+            qCDebug(lcMpvProperty).noquote() << "Querying a property from mpv:"
                                << name << "result:" << result;
         }*/
     }
@@ -359,9 +357,9 @@ bool MpvObject::mpvObserveProperty(const QString &name) {
     }
     const int errorCode = mpv::qt::observe_property(m_pMpv, name, 0);
     if (errorCode < 0) {
-        qWarning().noquote()
-            << messagePrefix_libmpv_property << "Failed to observe property"
-            << name << ':' << mpv::qt::error_string(errorCode);
+        qCWarning(lcMpvProperty).noquote()
+            << "Failed to observe property" << name << ':'
+            << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -856,7 +854,8 @@ bool MpvObject::stop() {
     return result;
 }
 
-bool MpvObject::seek(qint64 value, bool absolute, bool percent) {
+bool MpvObject::seek(const qint64 value, const bool absolute,
+                     const bool percent) {
     if (isStopped()) {
         return false;
     }
@@ -870,21 +869,21 @@ bool MpvObject::seek(qint64 value, bool absolute, bool percent) {
                                          : QString::fromUtf8("relative"))});
 }
 
-bool MpvObject::seekAbsolute(qint64 position) {
+bool MpvObject::seekAbsolute(const qint64 position) {
     if (isStopped() || (position == this->position())) {
         return false;
     }
     return seek(qBound(qint64(0), position, duration()), true);
 }
 
-bool MpvObject::seekRelative(qint64 offset) {
+bool MpvObject::seekRelative(const qint64 offset) {
     if (isStopped() || (offset == 0)) {
         return false;
     }
     return seek(qBound(-position(), offset, duration() - position()));
 }
 
-bool MpvObject::seekPercent(int percent) {
+bool MpvObject::seekPercent(const int percent) {
     if (isStopped() || (percent == this->percentPos())) {
         return false;
     }
@@ -917,9 +916,9 @@ bool MpvObject::loadConfigFile(const QString &path) {
     }
     const int errorCode = mpv::qt::load_config_file(m_pMpv, path);
     if (errorCode < 0) {
-        qWarning().noquote()
-            << messagePrefix_libmpv_misc << "Failed to load the config file"
-            << path << ':' << mpv::qt::error_string(errorCode);
+        qCWarning(lcMpvMisc).noquote()
+            << "Failed to load the config file" << path << ':'
+            << mpv::qt::error_string(errorCode);
     }
     return (errorCode >= 0);
 }
@@ -938,14 +937,14 @@ void MpvObject::setSource(const QUrl &source) {
     }
 }
 
-void MpvObject::setMute(bool mute) {
+void MpvObject::setMute(const bool mute) {
     if (mute == this->mute()) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("mute"), mute);
 }
 
-void MpvObject::setPlaybackState(MpvObject::PlaybackState playbackState) {
+void MpvObject::setPlaybackState(const MpvObject::PlaybackState playbackState) {
     if (isStopped() || (this->playbackState() == playbackState)) {
         return;
     }
@@ -966,7 +965,7 @@ void MpvObject::setPlaybackState(MpvObject::PlaybackState playbackState) {
     }
 }
 
-void MpvObject::setLogLevel(MpvObject::LogLevel logLevel) {
+void MpvObject::setLogLevel(const MpvObject::LogLevel logLevel) {
     if (logLevel == this->logLevel()) {
         return;
     }
@@ -1001,20 +1000,20 @@ void MpvObject::setLogLevel(MpvObject::LogLevel logLevel) {
     if (result1 && result2 && (errorCode >= 0)) {
         Q_EMIT logLevelChanged();
     } else {
-        qWarning().noquote()
-            << messagePrefix_libmpv_misc << "Failed to change log level to"
-            << level << ':' << mpv::qt::error_string(errorCode);
+        qCWarning(lcMpvMisc).noquote()
+            << "Failed to change log level to" << level << ':'
+            << mpv::qt::error_string(errorCode);
     }
 }
 
-void MpvObject::setPosition(qint64 position) {
+void MpvObject::setPosition(const qint64 position) {
     if (isStopped() || (position == this->position())) {
         return;
     }
     seek(qBound(qint64(0), position, duration()));
 }
 
-void MpvObject::setVolume(int volume) {
+void MpvObject::setVolume(const int volume) {
     if (volume == this->volume()) {
         return;
     }
@@ -1028,28 +1027,28 @@ void MpvObject::setHwdec(const QString &hwdec) {
     mpvSetProperty(QString::fromUtf8("hwdec"), hwdec);
 }
 
-void MpvObject::setVid(int vid) {
+void MpvObject::setVid(const int vid) {
     if (isStopped() || (vid == this->vid())) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("vid"), qMax(vid, 0));
 }
 
-void MpvObject::setAid(int aid) {
+void MpvObject::setAid(const int aid) {
     if (isStopped() || (aid == this->aid())) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("aid"), qMax(aid, 0));
 }
 
-void MpvObject::setSid(int sid) {
+void MpvObject::setSid(const int sid) {
     if (isStopped() || (sid == this->sid())) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("sid"), qMax(sid, 0));
 }
 
-void MpvObject::setVideoRotate(int videoRotate) {
+void MpvObject::setVideoRotate(const int videoRotate) {
     if (isStopped() || (videoRotate == this->videoRotate())) {
         return;
     }
@@ -1057,7 +1056,7 @@ void MpvObject::setVideoRotate(int videoRotate) {
                    qBound(0, videoRotate, 359));
 }
 
-void MpvObject::setVideoAspect(qreal videoAspect) {
+void MpvObject::setVideoAspect(const qreal videoAspect) {
     if (isStopped() || (videoAspect == this->videoAspect())) {
         return;
     }
@@ -1065,21 +1064,21 @@ void MpvObject::setVideoAspect(qreal videoAspect) {
                    qMax(videoAspect, 0.0));
 }
 
-void MpvObject::setSpeed(qreal speed) {
+void MpvObject::setSpeed(const qreal speed) {
     if (isStopped() || (speed == this->speed())) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("speed"), qMax(speed, 0.0));
 }
 
-void MpvObject::setDeinterlace(bool deinterlace) {
+void MpvObject::setDeinterlace(const bool deinterlace) {
     if (deinterlace == this->deinterlace()) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("deinterlace"), deinterlace);
 }
 
-void MpvObject::setAudioExclusive(bool audioExclusive) {
+void MpvObject::setAudioExclusive(const bool audioExclusive) {
     if (audioExclusive == this->audioExclusive()) {
         return;
     }
@@ -1134,7 +1133,8 @@ void MpvObject::setScreenshotFormat(const QString &screenshotFormat) {
     mpvSetProperty(QString::fromUtf8("screenshot-format"), screenshotFormat);
 }
 
-void MpvObject::setScreenshotPngCompression(int screenshotPngCompression) {
+void MpvObject::setScreenshotPngCompression(
+    const int screenshotPngCompression) {
     if (screenshotPngCompression == this->screenshotPngCompression()) {
         return;
     }
@@ -1167,7 +1167,7 @@ void MpvObject::setProfile(const QString &profile) {
     mpvSendCommand(QVariantList{QString::fromUtf8("apply-profile"), profile});
 }
 
-void MpvObject::setHrSeek(bool hrSeek) {
+void MpvObject::setHrSeek(const bool hrSeek) {
     if (hrSeek == this->hrSeek()) {
         return;
     }
@@ -1175,21 +1175,21 @@ void MpvObject::setHrSeek(bool hrSeek) {
                    hrSeek ? QString::fromUtf8("yes") : QString::fromUtf8("no"));
 }
 
-void MpvObject::setYtdl(bool ytdl) {
+void MpvObject::setYtdl(const bool ytdl) {
     if (ytdl == this->ytdl()) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("ytdl"), ytdl);
 }
 
-void MpvObject::setLoadScripts(bool loadScripts) {
+void MpvObject::setLoadScripts(const bool loadScripts) {
     if (loadScripts == this->loadScripts()) {
         return;
     }
     mpvSetProperty(QString::fromUtf8("load-scripts"), loadScripts);
 }
 
-void MpvObject::setScreenshotTagColorspace(bool screenshotTagColorspace) {
+void MpvObject::setScreenshotTagColorspace(const bool screenshotTagColorspace) {
     if (screenshotTagColorspace == this->screenshotTagColorspace()) {
         return;
     }
@@ -1197,7 +1197,7 @@ void MpvObject::setScreenshotTagColorspace(bool screenshotTagColorspace) {
                    screenshotTagColorspace);
 }
 
-void MpvObject::setScreenshotJpegQuality(int screenshotJpegQuality) {
+void MpvObject::setScreenshotJpegQuality(const int screenshotJpegQuality) {
     if (screenshotJpegQuality == this->screenshotJpegQuality()) {
         return;
     }
@@ -1205,7 +1205,7 @@ void MpvObject::setScreenshotJpegQuality(int screenshotJpegQuality) {
                    qBound(0, screenshotJpegQuality, 100));
 }
 
-void MpvObject::setMpvCallType(MpvObject::MpvCallType mpvCallType) {
+void MpvObject::setMpvCallType(const MpvObject::MpvCallType mpvCallType) {
     if (this->mpvCallType() == mpvCallType) {
         return;
     }
@@ -1213,7 +1213,7 @@ void MpvObject::setMpvCallType(MpvObject::MpvCallType mpvCallType) {
     Q_EMIT mpvCallTypeChanged();
 }
 
-void MpvObject::setPercentPos(int percentPos) {
+void MpvObject::setPercentPos(const int percentPos) {
     if (isStopped() || (percentPos == this->percentPos())) {
         return;
     }
@@ -1335,8 +1335,7 @@ void MpvObject::handleMpvEvents() {
             break;
         }
         if (shouldOutput) {
-            qDebug().noquote()
-                << messagePrefix_libmpv_event
+            qCDebug(lcMpvEvent).noquote()
                 << mpv::qt::event_name(event->event_id) << "event received.";
         }
     }

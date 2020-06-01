@@ -32,10 +32,18 @@
 #define MPV_ENABLE_DEPRECATED 0
 
 #include <QHash>
+#include <QLoggingCategory>
 #include <QQuickFramebufferObject>
 #include <QUrl>
 
-class MpvRenderer;
+Q_DECLARE_LOGGING_CATEGORY(lcMpv)
+Q_DECLARE_LOGGING_CATEGORY(lcMpvLog)
+Q_DECLARE_LOGGING_CATEGORY(lcMpvEvent)
+Q_DECLARE_LOGGING_CATEGORY(lcMpvCommand)
+Q_DECLARE_LOGGING_CATEGORY(lcMpvProperty)
+Q_DECLARE_LOGGING_CATEGORY(lcMpvMisc)
+
+QT_FORWARD_DECLARE_CLASS(MpvRenderer)
 
 class MpvObject : public QQuickFramebufferObject {
     Q_OBJECT
@@ -50,12 +58,12 @@ class MpvObject : public QQuickFramebufferObject {
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(bool mute READ mute WRITE setMute NOTIFY muteChanged)
     Q_PROPERTY(bool seekable READ seekable NOTIFY seekableChanged)
-    Q_PROPERTY(MpvObject::PlaybackState playbackState READ playbackState WRITE
+    Q_PROPERTY(PlaybackState playbackState READ playbackState WRITE
                    setPlaybackState NOTIFY playbackStateChanged)
-    Q_PROPERTY(MpvObject::MediaStatus mediaStatus READ mediaStatus NOTIFY
-                   mediaStatusChanged)
-    Q_PROPERTY(MpvObject::LogLevel logLevel READ logLevel WRITE setLogLevel
-                   NOTIFY logLevelChanged)
+    Q_PROPERTY(
+        MediaStatus mediaStatus READ mediaStatus NOTIFY mediaStatusChanged)
+    Q_PROPERTY(LogLevel logLevel READ logLevel WRITE setLogLevel NOTIFY
+                   logLevelChanged)
     Q_PROPERTY(QString hwdec READ hwdec WRITE setHwdec NOTIFY hwdecChanged)
     Q_PROPERTY(QString mpvVersion READ mpvVersion CONSTANT)
     Q_PROPERTY(QString mpvConfiguration READ mpvConfiguration CONSTANT)
@@ -102,32 +110,28 @@ class MpvObject : public QQuickFramebufferObject {
     Q_PROPERTY(qint64 fileSize READ fileSize NOTIFY fileSizeChanged)
     Q_PROPERTY(qreal videoBitrate READ videoBitrate NOTIFY videoBitrateChanged)
     Q_PROPERTY(qreal audioBitrate READ audioBitrate NOTIFY audioBitrateChanged)
-    Q_PROPERTY(MpvObject::AudioDevices audioDeviceList READ audioDeviceList
-                   NOTIFY audioDeviceListChanged)
+    Q_PROPERTY(AudioDevices audioDeviceList READ audioDeviceList NOTIFY
+                   audioDeviceListChanged)
     Q_PROPERTY(
         bool screenshotTagColorspace READ screenshotTagColorspace WRITE
             setScreenshotTagColorspace NOTIFY screenshotTagColorspaceChanged)
     Q_PROPERTY(int screenshotJpegQuality READ screenshotJpegQuality WRITE
                    setScreenshotJpegQuality NOTIFY screenshotJpegQualityChanged)
     Q_PROPERTY(QString videoFormat READ videoFormat NOTIFY videoFormatChanged)
-    Q_PROPERTY(MpvObject::MpvCallType mpvCallType READ mpvCallType WRITE
-                   setMpvCallType NOTIFY mpvCallTypeChanged)
-    Q_PROPERTY(MpvObject::MediaTracks mediaTracks READ mediaTracks NOTIFY
-                   mediaTracksChanged)
+    Q_PROPERTY(MpvCallType mpvCallType READ mpvCallType WRITE setMpvCallType
+                   NOTIFY mpvCallTypeChanged)
+    Q_PROPERTY(
+        MediaTracks mediaTracks READ mediaTracks NOTIFY mediaTracksChanged)
     Q_PROPERTY(QStringList videoSuffixes READ videoSuffixes CONSTANT)
     Q_PROPERTY(QStringList audioSuffixes READ audioSuffixes CONSTANT)
     Q_PROPERTY(QStringList subtitleSuffixes READ subtitleSuffixes CONSTANT)
-    Q_PROPERTY(
-        MpvObject::Chapters chapters READ chapters NOTIFY chaptersChanged)
-    Q_PROPERTY(
-        MpvObject::Metadata metadata READ metadata NOTIFY metadataChanged)
+    Q_PROPERTY(Chapters chapters READ chapters NOTIFY chaptersChanged)
+    Q_PROPERTY(Metadata metadata READ metadata NOTIFY metadataChanged)
     Q_PROPERTY(qreal avsync READ avsync NOTIFY avsyncChanged)
     Q_PROPERTY(int percentPos READ percentPos WRITE setPercentPos NOTIFY
                    percentPosChanged)
     Q_PROPERTY(
         qreal estimatedVfFps READ estimatedVfFps NOTIFY estimatedVfFpsChanged)
-
-    friend class MpvRenderer;
 
     using SingleTrackInfo = QHash<QString, QVariant>;
 
@@ -155,9 +159,9 @@ public:
     Q_ENUM(MpvCallType)
 
     struct MediaTracks {
-        QVector<SingleTrackInfo> videoChannels;
-        QVector<SingleTrackInfo> audioTracks;
-        QVector<SingleTrackInfo> subtitleStreams;
+        QVector<SingleTrackInfo> videoChannels = {};
+        QVector<SingleTrackInfo> audioTracks = {};
+        QVector<SingleTrackInfo> subtitleStreams = {};
     };
 
     using Chapters = QVector<SingleTrackInfo>;
@@ -184,9 +188,9 @@ public:
     // video-out-params/dh = video-params/dh = dheight
     QSize videoSize() const;
     // Playback state
-    MpvObject::PlaybackState playbackState() const;
+    PlaybackState playbackState() const;
     // Media status
-    MpvObject::MediaStatus mediaStatus() const;
+    MediaStatus mediaStatus() const;
     // Control verbosity directly for each module. The all module changes the
     // verbosity of all the modules. The verbosity changes from this option are
     // applied in order from left to right, and each item can override a
@@ -194,7 +198,7 @@ public:
     // --msg-level=<module1=level1,module2=level2,...>
     // Available levels: no, fatal, error, warn, info, status (default), v
     // (verbose messages), debug, trace (print all messages produced by mpv)
-    MpvObject::LogLevel logLevel() const;
+    LogLevel logLevel() const;
     // Duration of the current file in **SECONDS**, not milliseconds.
     qint64 duration() const;
     // Position in current file in **SECONDS**, not milliseconds.
@@ -338,13 +342,13 @@ public:
     // Audio bitrate
     qreal audioBitrate() const;
     // Return the list of discovered audio devices.
-    MpvObject::AudioDevices audioDeviceList() const;
+    AudioDevices audioDeviceList() const;
     // Video format as string.
     QString videoFormat() const;
     // The call type of mpv client APIs.
-    MpvObject::MpvCallType mpvCallType() const;
+    MpvCallType mpvCallType() const;
     // Video, audio and subtitle tracks.
-    MpvObject::MediaTracks mediaTracks() const;
+    MediaTracks mediaTracks() const;
     // File types supported by mpv:
     // https://github.com/mpv-player/mpv/blob/master/player/external_files.c
     QStringList videoSuffixes() const {
@@ -419,9 +423,9 @@ public:
             QString::fromUtf8("*.scc"),   QString::fromUtf8("*.smi")};
     }
     // Chapter list
-    MpvObject::Chapters chapters() const;
+    Chapters chapters() const;
     // Metadata map
-    MpvObject::Metadata metadata() const;
+    Metadata metadata() const;
     // Last A/V synchronization difference. Unavailable if audio or video is
     // disabled.
     qreal avsync() const;
@@ -439,37 +443,37 @@ public:
     qreal estimatedVfFps() const;
 
     void setSource(const QUrl &source);
-    void setMute(bool mute);
-    void setPlaybackState(MpvObject::PlaybackState playbackState);
-    void setLogLevel(MpvObject::LogLevel logLevel);
-    void setPosition(qint64 position);
-    void setVolume(int volume);
+    void setMute(const bool mute);
+    void setPlaybackState(const PlaybackState playbackState);
+    void setLogLevel(const LogLevel logLevel);
+    void setPosition(const qint64 position);
+    void setVolume(const int volume);
     void setHwdec(const QString &hwdec);
-    void setVid(int vid);
-    void setAid(int aid);
-    void setSid(int sid);
-    void setVideoRotate(int videoRotate);
-    void setVideoAspect(qreal videoAspect);
-    void setSpeed(qreal speed);
-    void setDeinterlace(bool deinterlace);
-    void setAudioExclusive(bool audioExclusive);
+    void setVid(const int vid);
+    void setAid(const int aid);
+    void setSid(const int sid);
+    void setVideoRotate(const int videoRotate);
+    void setVideoAspect(const qreal videoAspect);
+    void setSpeed(const qreal speed);
+    void setDeinterlace(const bool deinterlace);
+    void setAudioExclusive(const bool audioExclusive);
     void setAudioFileAuto(const QString &audioFileAuto);
     void setSubAuto(const QString &subAuto);
     void setSubCodepage(const QString &subCodepage);
     void setVo(const QString &vo);
     void setAo(const QString &ao);
     void setScreenshotFormat(const QString &screenshotFormat);
-    void setScreenshotPngCompression(int screenshotPngCompression);
+    void setScreenshotPngCompression(const int screenshotPngCompression);
     void setScreenshotTemplate(const QString &screenshotTemplate);
     void setScreenshotDirectory(const QString &screenshotDirectory);
     void setProfile(const QString &profile);
-    void setHrSeek(bool hrSeek);
-    void setYtdl(bool ytdl);
-    void setLoadScripts(bool loadScripts);
-    void setScreenshotTagColorspace(bool screenshotTagColorspace);
-    void setScreenshotJpegQuality(int screenshotJpegQuality);
-    void setMpvCallType(MpvObject::MpvCallType mpvCallType);
-    void setPercentPos(int percentPos);
+    void setHrSeek(const bool hrSeek);
+    void setYtdl(const bool ytdl);
+    void setLoadScripts(const bool loadScripts);
+    void setScreenshotTagColorspace(const bool screenshotTagColorspace);
+    void setScreenshotJpegQuality(const int screenshotJpegQuality);
+    void setMpvCallType(const MpvCallType mpvCallType);
+    void setPercentPos(const int percentPos);
 
 public Q_SLOTS:
     bool open(const QUrl &url);
@@ -477,18 +481,19 @@ public Q_SLOTS:
     bool play(const QUrl &url);
     bool pause();
     bool stop();
-    bool seek(qint64 value, bool absolute = false, bool percent = false);
+    bool seek(const qint64 value, const bool absolute = false,
+              const bool percent = false);
     // Jump to an absolute position, in seconds. libmpv supports negative
     // position, which means jump from the end of the file, but I will not
     // implement it in a short period of time because I think it's useless.
-    bool seekAbsolute(qint64 position);
+    bool seekAbsolute(const qint64 position);
     // Jump to a relative position, in seconds. If the offset is negative, then
     // the player will jump back.
-    bool seekRelative(qint64 offset);
+    bool seekRelative(const qint64 offset);
     // Jump to an absolute percent position (0-100). Although libmpv supports
     // relative percent, I will not implement it in a short period of time
     // because I don't think it is useful enough.
-    bool seekPercent(int percent);
+    bool seekPercent(const int percent);
     bool screenshot();
     // According to mpv's manual, the file path must contain an extension
     // name, otherwise the behavior is arbitrary.
@@ -506,7 +511,7 @@ private Q_SLOTS:
 private:
     bool mpvSendCommand(const QVariant &arguments);
     bool mpvSetProperty(const QString &name, const QVariant &value);
-    QVariant mpvGetProperty(const QString &name, bool silent = false,
+    QVariant mpvGetProperty(const QString &name, const bool silent = false,
                             bool *ok = nullptr) const;
     bool mpvObserveProperty(const QString &name);
 
@@ -518,7 +523,7 @@ private:
     bool isPaused() const;
     bool isStopped() const;
 
-    void setMediaStatus(MpvObject::MediaStatus mediaStatus);
+    void setMediaStatus(const MediaStatus mediaStatus);
 
     // Should be called when MPV_EVENT_VIDEO_RECONFIG happens.
     // Never do anything expensive here.
@@ -530,10 +535,11 @@ private:
     void playbackStateChangeEvent();
 
 private:
+    friend class MpvRenderer;
+
     QUrl currentSource = QUrl();
-    MpvObject::MediaStatus currentMediaStatus = MpvObject::MediaStatus::NoMedia;
-    MpvObject::MpvCallType currentMpvCallType =
-        MpvObject::MpvCallType::Synchronous;
+    MediaStatus currentMediaStatus = MediaStatus::NoMedia;
+    MpvCallType currentMpvCallType = MpvCallType::Synchronous;
 
     const QHash<QString, QString> properties = {
         {QString::fromUtf8("dwidth"), QString::fromUtf8("videoSizeChanged")},
