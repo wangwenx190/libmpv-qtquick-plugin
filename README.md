@@ -166,7 +166,7 @@ Before doing anything else, please make sure you have a compiler that supports a
 
    MpvPlayer {
        // ...
-       hwdec: "auto" // type: string
+       hwdec: "auto-safe" // type: string
        // ...
    }
    ```
