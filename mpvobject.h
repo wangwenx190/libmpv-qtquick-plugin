@@ -31,6 +31,7 @@
 
 #define MPV_ENABLE_DEPRECATED 0
 
+#include "mpvqthelper.hpp"
 #include <QHash>
 #include <QLoggingCategory>
 #include <QQuickFramebufferObject>
@@ -132,6 +133,13 @@ class MpvObject : public QQuickFramebufferObject {
                    percentPosChanged)
     Q_PROPERTY(
         qreal estimatedVfFps READ estimatedVfFps NOTIFY estimatedVfFpsChanged)
+    Q_PROPERTY(QStringList mediaSuffixes READ mediaSuffixes CONSTANT)
+    Q_PROPERTY(bool livePreview READ livePreview WRITE setLivePreview NOTIFY
+                   livePreviewChanged)
+    Q_PROPERTY(
+        QString positionText READ positionText NOTIFY positionTextChanged)
+    Q_PROPERTY(
+        QString durationText READ durationText NOTIFY durationTextChanged)
 
     using SingleTrackInfo = QHash<QString, QVariant>;
 
@@ -351,7 +359,7 @@ public:
     MediaTracks mediaTracks() const;
     // File types supported by mpv:
     // https://github.com/mpv-player/mpv/blob/master/player/external_files.c
-    QStringList videoSuffixes() const {
+    static QStringList videoSuffixes() {
         return QStringList{
             QString::fromUtf8("*.3g2"),   QString::fromUtf8("*.3ga"),
             QString::fromUtf8("*.3gp"),   QString::fromUtf8("*.3gp2"),
@@ -403,7 +411,7 @@ public:
             QString::fromUtf8("*.wtv"),   QString::fromUtf8("*.xesc"),
             QString::fromUtf8("*.xspf")};
     }
-    QStringList audioSuffixes() const {
+    static QStringList audioSuffixes() {
         return QStringList{
             QString::fromUtf8("*.mp3"),  QString::fromUtf8("*.aac"),
             QString::fromUtf8("*.mka"),  QString::fromUtf8("*.dts"),
@@ -412,7 +420,7 @@ public:
             QString::fromUtf8("*.opus"), QString::fromUtf8("*.wav"),
             QString::fromUtf8("*.wv")};
     }
-    QStringList subtitleSuffixes() const {
+    static QStringList subtitleSuffixes() {
         return QStringList{
             QString::fromUtf8("*.utf"),   QString::fromUtf8("*.utf8"),
             QString::fromUtf8("*.utf-8"), QString::fromUtf8("*.idx"),
@@ -441,6 +449,19 @@ public:
     // enabled, or after precise seeking). Files with imprecise timestamps (such
     // as Matroska) might lead to unstable results.
     qreal estimatedVfFps() const;
+
+    static QStringList mediaSuffixes() {
+        QStringList suffixes{};
+        suffixes.append(videoSuffixes());
+        suffixes.append(audioSuffixes());
+        return suffixes;
+    }
+
+    bool livePreview() const;
+
+    QString positionText() const;
+
+    QString durationText() const;
 
     void setSource(const QUrl &source);
     void setMute(const bool mute);
@@ -474,6 +495,7 @@ public:
     void setScreenshotJpegQuality(const int screenshotJpegQuality);
     void setMpvCallType(const MpvCallType mpvCallType);
     void setPercentPos(const int percentPos);
+    void setLivePreview(const bool livePreview);
 
 public Q_SLOTS:
     bool open(const QUrl &url);
@@ -501,6 +523,12 @@ public Q_SLOTS:
     // Loads and parses the config file, and sets every entry in the config
     // file's default section as if mpv_set_option_string() is called.
     bool loadConfigFile(const QString &path);
+    static bool isVideo(const QUrl &url);
+    static bool isAudio(const QUrl &url);
+    static bool isMedia(const QUrl &url);
+    bool currentIsVideo() const;
+    bool currentIsAudio() const;
+    bool currentIsMedia() const;
 
 protected Q_SLOTS:
     void handleMpvEvents();
@@ -537,9 +565,13 @@ private:
 private:
     friend class MpvRenderer;
 
+    mpv_handle *m_mpv = nullptr;
+    mpv_render_context *m_mpvGL = nullptr;
+
     QUrl currentSource = QUrl();
     MediaStatus currentMediaStatus = MediaStatus::NoMedia;
     MpvCallType currentMpvCallType = MpvCallType::Synchronous;
+    bool currentLivePreview = false;
 
     const QHash<QString, QString> properties = {
         {QString::fromUtf8("dwidth"), QString::fromUtf8("videoSizeChanged")},
@@ -687,6 +719,9 @@ Q_SIGNALS:
     void avsyncChanged();
     void percentPosChanged();
     void estimatedVfFpsChanged();
+    void livePreviewChanged();
+    void positionTextChanged();
+    void durationTextChanged();
 };
 
 Q_DECLARE_METATYPE(MpvObject::MediaTracks)
