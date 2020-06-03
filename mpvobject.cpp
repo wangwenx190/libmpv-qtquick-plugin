@@ -200,6 +200,9 @@ void MpvObject::on_update(void *ctx) {
 void MpvObject::doUpdate() { update(); }
 
 void MpvObject::processMpvLogMessage(void *event) {
+    if (currentLivePreview) {
+        return;
+    }
     const auto e = static_cast<mpv_event_log_message *>(event);
     // The log message from libmpv contains new line. Remove it.
     const QString message = QString::fromUtf8(e->text).trimmed();
@@ -231,19 +234,17 @@ void MpvObject::processMpvLogMessage(void *event) {
 void MpvObject::processMpvPropertyChange(void *event) {
     const auto e = static_cast<mpv_event_property *>(event);
     const QString name = QString::fromUtf8(e->name);
-    if (!propertyBlackList.contains(name)) {
+    if (!propertyBlackList.contains(name) && !currentLivePreview) {
         qCDebug(lcMpvProperty).noquote()
             << name << "-->" << mpvGetProperty(name, true);
     }
     if (properties.contains(name)) {
-        const QString signalName = properties.value(name);
-        if (!signalName.isEmpty()) {
-            QMetaObject::invokeMethod(this, qUtf8Printable(signalName));
-            if (signalName == QString::fromUtf8("positionChanged")) {
-                Q_EMIT positionTextChanged();
-            }
-            if (signalName == QString::fromUtf8("durationChanged")) {
-                Q_EMIT durationTextChanged();
+        const QStringList signalNames = properties.value(name);
+        if (!signalNames.isEmpty()) {
+            for (auto &&signalName : qAsConst(signalNames)) {
+                if (!signalName.isEmpty()) {
+                    QMetaObject::invokeMethod(this, qUtf8Printable(signalName));
+                }
             }
         }
     }
@@ -296,14 +297,16 @@ bool MpvObject::mpvSendCommand(const QVariant &arguments) {
     if (arguments.isNull() || !arguments.isValid()) {
         return false;
     }
-    qCDebug(lcMpvCommand).noquote() << arguments;
+    if (!currentLivePreview) {
+        qCDebug(lcMpvCommand).noquote() << arguments;
+    }
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::command_async(m_mpv, arguments, 0);
     } else {
         errorCode = mpv::qt::get_error(mpv::qt::command(m_mpv, arguments));
     }
-    if (errorCode < 0) {
+    if ((errorCode < 0) && !currentLivePreview) {
         qCWarning(lcMpvCommand).noquote()
             << "Failed to send command" << arguments << ':'
             << mpv::qt::error_string(errorCode);
@@ -315,14 +318,16 @@ bool MpvObject::mpvSetProperty(const QString &name, const QVariant &value) {
     if (name.isEmpty() || value.isNull() || !value.isValid()) {
         return false;
     }
-    qCDebug(lcMpvProperty).noquote() << name << "-->" << value;
+    if (!currentLivePreview) {
+        qCDebug(lcMpvProperty).noquote() << name << "-->" << value;
+    }
     int errorCode = 0;
     if (mpvCallType() == MpvCallType::Asynchronous) {
         errorCode = mpv::qt::set_property_async(m_mpv, name, value, 0);
     } else {
         errorCode = mpv::qt::set_property(m_mpv, name, value);
     }
-    if (errorCode < 0) {
+    if ((errorCode < 0) && !currentLivePreview) {
         qCWarning(lcMpvProperty).noquote()
             << "Failed to change property" << name << "to" << value << ':'
             << mpv::qt::error_string(errorCode);
@@ -341,7 +346,7 @@ QVariant MpvObject::mpvGetProperty(const QString &name, const bool silent,
     const QVariant result = mpv::qt::get_property(m_mpv, name);
     const int errorCode = mpv::qt::get_error(result);
     if (result.isNull() || !result.isValid() || (errorCode < 0)) {
-        if (!silent) {
+        if (!silent && !currentLivePreview) {
             qCWarning(lcMpvProperty).noquote()
                 << "Failed to query property" << name << ':'
                 << mpv::qt::error_string(errorCode);
@@ -363,7 +368,7 @@ bool MpvObject::mpvObserveProperty(const QString &name) {
         return false;
     }
     const int errorCode = mpv::qt::observe_property(m_mpv, name, 0);
-    if (errorCode < 0) {
+    if ((errorCode < 0) && !currentLivePreview) {
         qCWarning(lcMpvProperty).noquote()
             << "Failed to observe property" << name << ':'
             << mpv::qt::error_string(errorCode);
@@ -929,7 +934,7 @@ bool MpvObject::loadConfigFile(const QString &path) {
         return false;
     }
     const int errorCode = mpv::qt::load_config_file(m_mpv, path);
-    if (errorCode < 0) {
+    if ((errorCode < 0) && !currentLivePreview) {
         qCWarning(lcMpvMisc).noquote()
             << "Failed to load the config file" << path << ':'
             << mpv::qt::error_string(errorCode);
@@ -1051,9 +1056,11 @@ void MpvObject::setLogLevel(const MpvObject::LogLevel logLevel) {
     if (result1 && result2 && (errorCode >= 0)) {
         Q_EMIT logLevelChanged();
     } else {
-        qCWarning(lcMpvMisc).noquote()
-            << "Failed to change log level to" << level << ':'
-            << mpv::qt::error_string(errorCode);
+        if (!currentLivePreview) {
+            qCWarning(lcMpvMisc).noquote()
+                << "Failed to change log level to" << level << ':'
+                << mpv::qt::error_string(errorCode);
+        }
     }
 }
 
@@ -1403,7 +1410,7 @@ void MpvObject::handleMpvEvents() {
         default:
             break;
         }
-        if (shouldOutput) {
+        if (shouldOutput && !currentLivePreview) {
             qCDebug(lcMpvEvent).noquote()
                 << mpv::qt::event_name(event->event_id) << "event received.";
         }
