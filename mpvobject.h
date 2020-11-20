@@ -46,7 +46,8 @@ Q_DECLARE_LOGGING_CATEGORY(lcMpvMisc)
 
 QT_FORWARD_DECLARE_CLASS(MpvRenderer)
 
-class MpvObject : public QQuickFramebufferObject {
+class MpvObject : public QQuickFramebufferObject
+{
     Q_OBJECT
     QML_ELEMENT
     Q_DISABLE_COPY_MOVE(MpvObject)
@@ -54,17 +55,14 @@ class MpvObject : public QQuickFramebufferObject {
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(qint64 duration READ duration NOTIFY durationChanged)
-    Q_PROPERTY(
-        qint64 position READ position WRITE setPosition NOTIFY positionChanged)
+    Q_PROPERTY(qint64 position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(bool mute READ mute WRITE setMute NOTIFY muteChanged)
     Q_PROPERTY(bool seekable READ seekable NOTIFY seekableChanged)
-    Q_PROPERTY(PlaybackState playbackState READ playbackState WRITE
-                   setPlaybackState NOTIFY playbackStateChanged)
-    Q_PROPERTY(
-        MediaStatus mediaStatus READ mediaStatus NOTIFY mediaStatusChanged)
-    Q_PROPERTY(LogLevel logLevel READ logLevel WRITE setLogLevel NOTIFY
-                   logLevelChanged)
+    Q_PROPERTY(PlaybackState playbackState READ playbackState WRITE setPlaybackState NOTIFY
+                   playbackStateChanged)
+    Q_PROPERTY(MediaStatus mediaStatus READ mediaStatus NOTIFY mediaStatusChanged)
+    Q_PROPERTY(LogLevel logLevel READ logLevel WRITE setLogLevel NOTIFY logLevelChanged)
     Q_PROPERTY(QString hwdec READ hwdec WRITE setHwdec NOTIFY hwdecChanged)
     Q_PROPERTY(QString mpvVersion READ mpvVersion CONSTANT)
     Q_PROPERTY(QString mpvConfiguration READ mpvConfiguration CONSTANT)
@@ -72,74 +70,58 @@ class MpvObject : public QQuickFramebufferObject {
     Q_PROPERTY(int vid READ vid WRITE setVid NOTIFY vidChanged)
     Q_PROPERTY(int aid READ aid WRITE setAid NOTIFY aidChanged)
     Q_PROPERTY(int sid READ sid WRITE setSid NOTIFY sidChanged)
-    Q_PROPERTY(int videoRotate READ videoRotate WRITE setVideoRotate NOTIFY
-                   videoRotateChanged)
-    Q_PROPERTY(qreal videoAspect READ videoAspect WRITE setVideoAspect NOTIFY
-                   videoAspectChanged)
+    Q_PROPERTY(int videoRotate READ videoRotate WRITE setVideoRotate NOTIFY videoRotateChanged)
+    Q_PROPERTY(qreal videoAspect READ videoAspect WRITE setVideoAspect NOTIFY videoAspectChanged)
     Q_PROPERTY(qreal speed READ speed WRITE setSpeed NOTIFY speedChanged)
-    Q_PROPERTY(bool deinterlace READ deinterlace WRITE setDeinterlace NOTIFY
-                   deinterlaceChanged)
-    Q_PROPERTY(bool audioExclusive READ audioExclusive WRITE setAudioExclusive
-                   NOTIFY audioExclusiveChanged)
-    Q_PROPERTY(QString audioFileAuto READ audioFileAuto WRITE setAudioFileAuto
-                   NOTIFY audioFileAutoChanged)
+    Q_PROPERTY(bool deinterlace READ deinterlace WRITE setDeinterlace NOTIFY deinterlaceChanged)
+    Q_PROPERTY(bool audioExclusive READ audioExclusive WRITE setAudioExclusive NOTIFY
+                   audioExclusiveChanged)
     Q_PROPERTY(
-        QString subAuto READ subAuto WRITE setSubAuto NOTIFY subAutoChanged)
-    Q_PROPERTY(QString subCodepage READ subCodepage WRITE setSubCodepage NOTIFY
-                   subCodepageChanged)
+        QString audioFileAuto READ audioFileAuto WRITE setAudioFileAuto NOTIFY audioFileAutoChanged)
+    Q_PROPERTY(QString subAuto READ subAuto WRITE setSubAuto NOTIFY subAutoChanged)
+    Q_PROPERTY(QString subCodepage READ subCodepage WRITE setSubCodepage NOTIFY subCodepageChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY fileNameChanged)
     Q_PROPERTY(QString mediaTitle READ mediaTitle NOTIFY mediaTitleChanged)
     Q_PROPERTY(QString vo READ vo WRITE setVo NOTIFY voChanged)
     Q_PROPERTY(QString ao READ ao WRITE setAo NOTIFY aoChanged)
-    Q_PROPERTY(QString screenshotFormat READ screenshotFormat WRITE
-                   setScreenshotFormat NOTIFY screenshotFormatChanged)
-    Q_PROPERTY(
-        int screenshotPngCompression READ screenshotPngCompression WRITE
-            setScreenshotPngCompression NOTIFY screenshotPngCompressionChanged)
-    Q_PROPERTY(QString screenshotTemplate READ screenshotTemplate WRITE
-                   setScreenshotTemplate NOTIFY screenshotTemplateChanged)
-    Q_PROPERTY(QString screenshotDirectory READ screenshotDirectory WRITE
-                   setScreenshotDirectory NOTIFY screenshotDirectoryChanged)
-    Q_PROPERTY(
-        QString profile READ profile WRITE setProfile NOTIFY profileChanged)
+    Q_PROPERTY(QString screenshotFormat READ screenshotFormat WRITE setScreenshotFormat NOTIFY
+                   screenshotFormatChanged)
+    Q_PROPERTY(int screenshotPngCompression READ screenshotPngCompression WRITE
+                   setScreenshotPngCompression NOTIFY screenshotPngCompressionChanged)
+    Q_PROPERTY(QString screenshotTemplate READ screenshotTemplate WRITE setScreenshotTemplate NOTIFY
+                   screenshotTemplateChanged)
+    Q_PROPERTY(QString screenshotDirectory READ screenshotDirectory WRITE setScreenshotDirectory
+                   NOTIFY screenshotDirectoryChanged)
+    Q_PROPERTY(QString profile READ profile WRITE setProfile NOTIFY profileChanged)
     Q_PROPERTY(bool hrSeek READ hrSeek WRITE setHrSeek NOTIFY hrSeekChanged)
     Q_PROPERTY(bool ytdl READ ytdl WRITE setYtdl NOTIFY ytdlChanged)
-    Q_PROPERTY(bool loadScripts READ loadScripts WRITE setLoadScripts NOTIFY
-                   loadScriptsChanged)
+    Q_PROPERTY(bool loadScripts READ loadScripts WRITE setLoadScripts NOTIFY loadScriptsChanged)
     Q_PROPERTY(QString path READ path NOTIFY pathChanged)
     Q_PROPERTY(QString fileFormat READ fileFormat NOTIFY fileFormatChanged)
     Q_PROPERTY(qint64 fileSize READ fileSize NOTIFY fileSizeChanged)
     Q_PROPERTY(qreal videoBitrate READ videoBitrate NOTIFY videoBitrateChanged)
     Q_PROPERTY(qreal audioBitrate READ audioBitrate NOTIFY audioBitrateChanged)
-    Q_PROPERTY(AudioDevices audioDeviceList READ audioDeviceList NOTIFY
-                   audioDeviceListChanged)
-    Q_PROPERTY(
-        bool screenshotTagColorspace READ screenshotTagColorspace WRITE
-            setScreenshotTagColorspace NOTIFY screenshotTagColorspaceChanged)
-    Q_PROPERTY(int screenshotJpegQuality READ screenshotJpegQuality WRITE
-                   setScreenshotJpegQuality NOTIFY screenshotJpegQualityChanged)
+    Q_PROPERTY(AudioDevices audioDeviceList READ audioDeviceList NOTIFY audioDeviceListChanged)
+    Q_PROPERTY(bool screenshotTagColorspace READ screenshotTagColorspace WRITE
+                   setScreenshotTagColorspace NOTIFY screenshotTagColorspaceChanged)
+    Q_PROPERTY(int screenshotJpegQuality READ screenshotJpegQuality WRITE setScreenshotJpegQuality
+                   NOTIFY screenshotJpegQualityChanged)
     Q_PROPERTY(QString videoFormat READ videoFormat NOTIFY videoFormatChanged)
-    Q_PROPERTY(MpvCallType mpvCallType READ mpvCallType WRITE setMpvCallType
-                   NOTIFY mpvCallTypeChanged)
     Q_PROPERTY(
-        MediaTracks mediaTracks READ mediaTracks NOTIFY mediaTracksChanged)
+        MpvCallType mpvCallType READ mpvCallType WRITE setMpvCallType NOTIFY mpvCallTypeChanged)
+    Q_PROPERTY(MediaTracks mediaTracks READ mediaTracks NOTIFY mediaTracksChanged)
     Q_PROPERTY(QStringList videoSuffixes READ videoSuffixes CONSTANT)
     Q_PROPERTY(QStringList audioSuffixes READ audioSuffixes CONSTANT)
     Q_PROPERTY(QStringList subtitleSuffixes READ subtitleSuffixes CONSTANT)
     Q_PROPERTY(Chapters chapters READ chapters NOTIFY chaptersChanged)
     Q_PROPERTY(Metadata metadata READ metadata NOTIFY metadataChanged)
     Q_PROPERTY(qreal avsync READ avsync NOTIFY avsyncChanged)
-    Q_PROPERTY(int percentPos READ percentPos WRITE setPercentPos NOTIFY
-                   percentPosChanged)
-    Q_PROPERTY(
-        qreal estimatedVfFps READ estimatedVfFps NOTIFY estimatedVfFpsChanged)
+    Q_PROPERTY(int percentPos READ percentPos WRITE setPercentPos NOTIFY percentPosChanged)
+    Q_PROPERTY(qreal estimatedVfFps READ estimatedVfFps NOTIFY estimatedVfFpsChanged)
     Q_PROPERTY(QStringList mediaSuffixes READ mediaSuffixes CONSTANT)
-    Q_PROPERTY(bool livePreview READ livePreview WRITE setLivePreview NOTIFY
-                   livePreviewChanged)
-    Q_PROPERTY(
-        QString positionText READ positionText NOTIFY positionTextChanged)
-    Q_PROPERTY(
-        QString durationText READ durationText NOTIFY durationTextChanged)
+    Q_PROPERTY(bool livePreview READ livePreview WRITE setLivePreview NOTIFY livePreviewChanged)
+    Q_PROPERTY(QString positionText READ positionText NOTIFY positionTextChanged)
+    Q_PROPERTY(QString durationText READ durationText NOTIFY durationTextChanged)
 
     using SingleTrackInfo = QHash<QString, QVariant>;
 
@@ -166,7 +148,8 @@ public:
     enum class MpvCallType { Synchronous, Asynchronous };
     Q_ENUM(MpvCallType)
 
-    struct MediaTracks {
+    struct MediaTracks
+    {
         QVector<SingleTrackInfo> videoChannels = {};
         QVector<SingleTrackInfo> audioTracks = {};
         QVector<SingleTrackInfo> subtitleStreams = {};
@@ -359,76 +342,88 @@ public:
     MediaTracks mediaTracks() const;
     // File types supported by mpv:
     // https://github.com/mpv-player/mpv/blob/master/player/external_files.c
-    static QStringList videoSuffixes() {
-        return QStringList{
-            QString::fromUtf8("*.3g2"),   QString::fromUtf8("*.3ga"),
-            QString::fromUtf8("*.3gp"),   QString::fromUtf8("*.3gp2"),
-            QString::fromUtf8("*.3gpp"),  QString::fromUtf8("*.amv"),
-            QString::fromUtf8("*.asf"),   QString::fromUtf8("*.asx"),
-            QString::fromUtf8("*.avf"),   QString::fromUtf8("*.avi"),
-            QString::fromUtf8("*.bdm"),   QString::fromUtf8("*.bdmv"),
-            QString::fromUtf8("*.bik"),   QString::fromUtf8("*.clpi"),
-            QString::fromUtf8("*.cpi"),   QString::fromUtf8("*.dat"),
-            QString::fromUtf8("*.divx"),  QString::fromUtf8("*.drc"),
-            QString::fromUtf8("*.dv"),    QString::fromUtf8("*.dvr-ms"),
-            QString::fromUtf8("*.f4v"),   QString::fromUtf8("*.flv"),
-            QString::fromUtf8("*.gvi"),   QString::fromUtf8("*.gxf"),
-            QString::fromUtf8("*.hdmov"), QString::fromUtf8("*.hlv"),
-            QString::fromUtf8("*.iso"),   QString::fromUtf8("*.letv"),
-            QString::fromUtf8("*.lrv"),   QString::fromUtf8("*.m1v"),
-            QString::fromUtf8("*.m2p"),   QString::fromUtf8("*.m2t"),
-            QString::fromUtf8("*.m2ts"),  QString::fromUtf8("*.m2v"),
-            QString::fromUtf8("*.m3u"),   QString::fromUtf8("*.m3u8"),
-            QString::fromUtf8("*.m4v"),   QString::fromUtf8("*.mkv"),
-            QString::fromUtf8("*.moov"),  QString::fromUtf8("*.mov"),
-            QString::fromUtf8("*.mp2"),   QString::fromUtf8("*.mp2v"),
-            QString::fromUtf8("*.mp4"),   QString::fromUtf8("*.mp4v"),
-            QString::fromUtf8("*.mpe"),   QString::fromUtf8("*.mpeg"),
-            QString::fromUtf8("*.mpeg1"), QString::fromUtf8("*.mpeg2"),
-            QString::fromUtf8("*.mpeg4"), QString::fromUtf8("*.mpg"),
-            QString::fromUtf8("*.mpl"),   QString::fromUtf8("*.mpls"),
-            QString::fromUtf8("*.mpv"),   QString::fromUtf8("*.mpv2"),
-            QString::fromUtf8("*.mqv"),   QString::fromUtf8("*.mts"),
-            QString::fromUtf8("*.mtv"),   QString::fromUtf8("*.mxf"),
-            QString::fromUtf8("*.mxg"),   QString::fromUtf8("*.nsv"),
-            QString::fromUtf8("*.nuv"),   QString::fromUtf8("*.ogm"),
-            QString::fromUtf8("*.ogv"),   QString::fromUtf8("*.ogx"),
-            QString::fromUtf8("*.ps"),    QString::fromUtf8("*.qt"),
-            QString::fromUtf8("*.qtvr"),  QString::fromUtf8("*.ram"),
-            QString::fromUtf8("*.rec"),   QString::fromUtf8("*.rm"),
-            QString::fromUtf8("*.rmj"),   QString::fromUtf8("*.rmm"),
-            QString::fromUtf8("*.rms"),   QString::fromUtf8("*.rmvb"),
-            QString::fromUtf8("*.rmx"),   QString::fromUtf8("*.rp"),
-            QString::fromUtf8("*.rpl"),   QString::fromUtf8("*.rv"),
-            QString::fromUtf8("*.rvx"),   QString::fromUtf8("*.thp"),
-            QString::fromUtf8("*.tod"),   QString::fromUtf8("*.tp"),
-            QString::fromUtf8("*.trp"),   QString::fromUtf8("*.ts"),
-            QString::fromUtf8("*.tts"),   QString::fromUtf8("*.txd"),
-            QString::fromUtf8("*.vcd"),   QString::fromUtf8("*.vdr"),
-            QString::fromUtf8("*.vob"),   QString::fromUtf8("*.vp8"),
-            QString::fromUtf8("*.vro"),   QString::fromUtf8("*.webm"),
-            QString::fromUtf8("*.wm"),    QString::fromUtf8("*.wmv"),
-            QString::fromUtf8("*.wtv"),   QString::fromUtf8("*.xesc"),
-            QString::fromUtf8("*.xspf")};
+    static QStringList videoSuffixes()
+    {
+        return QStringList{QString::fromUtf8("*.3g2"),   QString::fromUtf8("*.3ga"),
+                           QString::fromUtf8("*.3gp"),   QString::fromUtf8("*.3gp2"),
+                           QString::fromUtf8("*.3gpp"),  QString::fromUtf8("*.amv"),
+                           QString::fromUtf8("*.asf"),   QString::fromUtf8("*.asx"),
+                           QString::fromUtf8("*.avf"),   QString::fromUtf8("*.avi"),
+                           QString::fromUtf8("*.bdm"),   QString::fromUtf8("*.bdmv"),
+                           QString::fromUtf8("*.bik"),   QString::fromUtf8("*.clpi"),
+                           QString::fromUtf8("*.cpi"),   QString::fromUtf8("*.dat"),
+                           QString::fromUtf8("*.divx"),  QString::fromUtf8("*.drc"),
+                           QString::fromUtf8("*.dv"),    QString::fromUtf8("*.dvr-ms"),
+                           QString::fromUtf8("*.f4v"),   QString::fromUtf8("*.flv"),
+                           QString::fromUtf8("*.gvi"),   QString::fromUtf8("*.gxf"),
+                           QString::fromUtf8("*.hdmov"), QString::fromUtf8("*.hlv"),
+                           QString::fromUtf8("*.iso"),   QString::fromUtf8("*.letv"),
+                           QString::fromUtf8("*.lrv"),   QString::fromUtf8("*.m1v"),
+                           QString::fromUtf8("*.m2p"),   QString::fromUtf8("*.m2t"),
+                           QString::fromUtf8("*.m2ts"),  QString::fromUtf8("*.m2v"),
+                           QString::fromUtf8("*.m3u"),   QString::fromUtf8("*.m3u8"),
+                           QString::fromUtf8("*.m4v"),   QString::fromUtf8("*.mkv"),
+                           QString::fromUtf8("*.moov"),  QString::fromUtf8("*.mov"),
+                           QString::fromUtf8("*.mp2"),   QString::fromUtf8("*.mp2v"),
+                           QString::fromUtf8("*.mp4"),   QString::fromUtf8("*.mp4v"),
+                           QString::fromUtf8("*.mpe"),   QString::fromUtf8("*.mpeg"),
+                           QString::fromUtf8("*.mpeg1"), QString::fromUtf8("*.mpeg2"),
+                           QString::fromUtf8("*.mpeg4"), QString::fromUtf8("*.mpg"),
+                           QString::fromUtf8("*.mpl"),   QString::fromUtf8("*.mpls"),
+                           QString::fromUtf8("*.mpv"),   QString::fromUtf8("*.mpv2"),
+                           QString::fromUtf8("*.mqv"),   QString::fromUtf8("*.mts"),
+                           QString::fromUtf8("*.mtv"),   QString::fromUtf8("*.mxf"),
+                           QString::fromUtf8("*.mxg"),   QString::fromUtf8("*.nsv"),
+                           QString::fromUtf8("*.nuv"),   QString::fromUtf8("*.ogm"),
+                           QString::fromUtf8("*.ogv"),   QString::fromUtf8("*.ogx"),
+                           QString::fromUtf8("*.ps"),    QString::fromUtf8("*.qt"),
+                           QString::fromUtf8("*.qtvr"),  QString::fromUtf8("*.ram"),
+                           QString::fromUtf8("*.rec"),   QString::fromUtf8("*.rm"),
+                           QString::fromUtf8("*.rmj"),   QString::fromUtf8("*.rmm"),
+                           QString::fromUtf8("*.rms"),   QString::fromUtf8("*.rmvb"),
+                           QString::fromUtf8("*.rmx"),   QString::fromUtf8("*.rp"),
+                           QString::fromUtf8("*.rpl"),   QString::fromUtf8("*.rv"),
+                           QString::fromUtf8("*.rvx"),   QString::fromUtf8("*.thp"),
+                           QString::fromUtf8("*.tod"),   QString::fromUtf8("*.tp"),
+                           QString::fromUtf8("*.trp"),   QString::fromUtf8("*.ts"),
+                           QString::fromUtf8("*.tts"),   QString::fromUtf8("*.txd"),
+                           QString::fromUtf8("*.vcd"),   QString::fromUtf8("*.vdr"),
+                           QString::fromUtf8("*.vob"),   QString::fromUtf8("*.vp8"),
+                           QString::fromUtf8("*.vro"),   QString::fromUtf8("*.webm"),
+                           QString::fromUtf8("*.wm"),    QString::fromUtf8("*.wmv"),
+                           QString::fromUtf8("*.wtv"),   QString::fromUtf8("*.xesc"),
+                           QString::fromUtf8("*.xspf")};
     }
-    static QStringList audioSuffixes() {
-        return QStringList{
-            QString::fromUtf8("*.mp3"),  QString::fromUtf8("*.aac"),
-            QString::fromUtf8("*.mka"),  QString::fromUtf8("*.dts"),
-            QString::fromUtf8("*.flac"), QString::fromUtf8("*.ogg"),
-            QString::fromUtf8("*.m4a"),  QString::fromUtf8("*.ac3"),
-            QString::fromUtf8("*.opus"), QString::fromUtf8("*.wav"),
-            QString::fromUtf8("*.wv")};
+    static QStringList audioSuffixes()
+    {
+        return QStringList{QString::fromUtf8("*.mp3"),
+                           QString::fromUtf8("*.aac"),
+                           QString::fromUtf8("*.mka"),
+                           QString::fromUtf8("*.dts"),
+                           QString::fromUtf8("*.flac"),
+                           QString::fromUtf8("*.ogg"),
+                           QString::fromUtf8("*.m4a"),
+                           QString::fromUtf8("*.ac3"),
+                           QString::fromUtf8("*.opus"),
+                           QString::fromUtf8("*.wav"),
+                           QString::fromUtf8("*.wv")};
     }
-    static QStringList subtitleSuffixes() {
-        return QStringList{
-            QString::fromUtf8("*.utf"),   QString::fromUtf8("*.utf8"),
-            QString::fromUtf8("*.utf-8"), QString::fromUtf8("*.idx"),
-            QString::fromUtf8("*.sub"),   QString::fromUtf8("*.srt"),
-            QString::fromUtf8("*.rt"),    QString::fromUtf8("*.ssa"),
-            QString::fromUtf8("*.ass"),   QString::fromUtf8("*.mks"),
-            QString::fromUtf8("*.vtt"),   QString::fromUtf8("*.sup"),
-            QString::fromUtf8("*.scc"),   QString::fromUtf8("*.smi")};
+    static QStringList subtitleSuffixes()
+    {
+        return QStringList{QString::fromUtf8("*.utf"),
+                           QString::fromUtf8("*.utf8"),
+                           QString::fromUtf8("*.utf-8"),
+                           QString::fromUtf8("*.idx"),
+                           QString::fromUtf8("*.sub"),
+                           QString::fromUtf8("*.srt"),
+                           QString::fromUtf8("*.rt"),
+                           QString::fromUtf8("*.ssa"),
+                           QString::fromUtf8("*.ass"),
+                           QString::fromUtf8("*.mks"),
+                           QString::fromUtf8("*.vtt"),
+                           QString::fromUtf8("*.sup"),
+                           QString::fromUtf8("*.scc"),
+                           QString::fromUtf8("*.smi")};
     }
     // Chapter list
     Chapters chapters() const;
@@ -450,7 +445,8 @@ public:
     // as Matroska) might lead to unstable results.
     qreal estimatedVfFps() const;
 
-    static QStringList mediaSuffixes() {
+    static QStringList mediaSuffixes()
+    {
         QStringList suffixes{};
         suffixes.append(videoSuffixes());
         suffixes.append(audioSuffixes());
@@ -503,8 +499,7 @@ public Q_SLOTS:
     bool play(const QUrl &url);
     bool pause();
     bool stop();
-    bool seek(const qint64 value, const bool absolute = false,
-              const bool percent = false);
+    bool seek(const qint64 value, const bool absolute = false, const bool percent = false);
     // Jump to an absolute position, in seconds. libmpv supports negative
     // position, which means jump from the end of the file, but I will not
     // implement it in a short period of time because I think it's useless.
@@ -539,7 +534,8 @@ private Q_SLOTS:
 private:
     bool mpvSendCommand(const QVariant &arguments);
     bool mpvSetProperty(const QString &name, const QVariant &value);
-    QVariant mpvGetProperty(const QString &name, const bool silent = false,
+    QVariant mpvGetProperty(const QString &name,
+                            const bool silent = false,
                             bool *ok = nullptr) const;
     bool mpvObserveProperty(const QString &name);
 
@@ -573,99 +569,76 @@ private:
     MpvCallType currentMpvCallType = MpvCallType::Synchronous;
     bool currentLivePreview = false;
 
-    const QHash<QString, QStringList> properties = {
-        {QString::fromUtf8("dwidth"), {QString::fromUtf8("videoSizeChanged")}},
-        {QString::fromUtf8("dheight"), {QString::fromUtf8("videoSizeChanged")}},
-        {QString::fromUtf8("duration"),
-         {QString::fromUtf8("durationChanged"),
-          QString::fromUtf8("durationTextChanged")}},
-        {QString::fromUtf8("time-pos"),
-         {QString::fromUtf8("positionChanged"),
-          QString::fromUtf8("positionTextChanged")}},
-        {QString::fromUtf8("volume"), {QString::fromUtf8("volumeChanged")}},
-        {QString::fromUtf8("mute"), {QString::fromUtf8("muteChanged")}},
-        {QString::fromUtf8("seekable"), {QString::fromUtf8("seekableChanged")}},
-        {QString::fromUtf8("hwdec"), {QString::fromUtf8("hwdecChanged")}},
-        {QString::fromUtf8("vid"), {QString::fromUtf8("vidChanged")}},
-        {QString::fromUtf8("aid"), {QString::fromUtf8("aidChanged")}},
-        {QString::fromUtf8("sid"), {QString::fromUtf8("sidChanged")}},
-        {QString::fromUtf8("video-rotate"),
-         {QString::fromUtf8("videoRotateChanged")}},
-        {QString::fromUtf8("video-out-params/aspect"),
-         {QString::fromUtf8("videoAspectChanged")}},
-        {QString::fromUtf8("speed"), {QString::fromUtf8("speedChanged")}},
-        {QString::fromUtf8("deinterlace"),
-         {QString::fromUtf8("deinterlaceChanged")}},
-        {QString::fromUtf8("audio-exclusive"),
-         {QString::fromUtf8("audioExclusiveChanged")}},
-        {QString::fromUtf8("audio-file-auto"),
-         {QString::fromUtf8("audioFileAutoChanged")}},
-        {QString::fromUtf8("sub-auto"), {QString::fromUtf8("subAutoChanged")}},
-        {QString::fromUtf8("sub-codepage"),
-         {QString::fromUtf8("subCodepageChanged")}},
-        {QString::fromUtf8("filename"), {QString::fromUtf8("fileNameChanged")}},
-        {QString::fromUtf8("media-title"),
-         {QString::fromUtf8("mediaTitleChanged")}},
-        {QString::fromUtf8("vo"), {QString::fromUtf8("voChanged")}},
-        {QString::fromUtf8("ao"), {QString::fromUtf8("aoChanged")}},
-        {QString::fromUtf8("screenshot-format"),
-         {QString::fromUtf8("screenshotFormatChanged")}},
-        {QString::fromUtf8("screenshot-png-compression"),
-         {QString::fromUtf8("screenshotPngCompressionChanged")}},
-        {QString::fromUtf8("screenshot-template"),
-         {QString::fromUtf8("screenshotTemplateChanged")}},
-        {QString::fromUtf8("screenshot-directory"),
-         {QString::fromUtf8("screenshotDirectoryChanged")}},
-        {QString::fromUtf8("profile"), {QString::fromUtf8("profileChanged")}},
-        {QString::fromUtf8("hr-seek"), {QString::fromUtf8("hrSeekChanged")}},
-        {QString::fromUtf8("ytdl"), {QString::fromUtf8("ytdlChanged")}},
-        {QString::fromUtf8("load-scripts"),
-         {QString::fromUtf8("loadScriptsChanged")}},
-        {QString::fromUtf8("path"), {QString::fromUtf8("pathChanged")}},
-        {QString::fromUtf8("file-format"),
-         {QString::fromUtf8("fileFormatChanged")}},
-        {QString::fromUtf8("file-size"),
-         {QString::fromUtf8("fileSizeChanged")}},
-        {QString::fromUtf8("video-bitrate"),
-         {QString::fromUtf8("videoBitrateChanged")}},
-        {QString::fromUtf8("audio-bitrate"),
-         {QString::fromUtf8("audioBitrateChanged")}},
-        {QString::fromUtf8("audio-device-list"),
-         {QString::fromUtf8("audioDeviceListChanged")}},
-        {QString::fromUtf8("screenshot-tag-colorspace"),
-         {QString::fromUtf8("screenshotTagColorspaceChanged")}},
-        {QString::fromUtf8("screenshot-jpeg-quality"),
-         {QString::fromUtf8("screenshotJpegQualityChanged")}},
-        {QString::fromUtf8("video-format"),
-         {QString::fromUtf8("videoFormatChanged")}},
-        {QString::fromUtf8("pause"),
-         {QString::fromUtf8("playbackStateChanged")}},
-        {QString::fromUtf8("idle-active"),
-         {QString::fromUtf8("playbackStateChanged")}},
-        {QString::fromUtf8("track-list"),
-         {QString::fromUtf8("mediaTracksChanged")}},
-        {QString::fromUtf8("chapter-list"),
-         {QString::fromUtf8("chaptersChanged")}},
-        {QString::fromUtf8("metadata"), {QString::fromUtf8("metadataChanged")}},
-        {QString::fromUtf8("avsync"), {QString::fromUtf8("avsyncChanged")}},
-        {QString::fromUtf8("percent-pos"),
-         {QString::fromUtf8("percentPosChanged"),
-          QString::fromUtf8("positionChanged"),
-          QString::fromUtf8("positionTextChanged")}},
-        {QString::fromUtf8("estimated-vf-fps"),
-         {QString::fromUtf8("estimatedVfFpsChanged")}}};
+    const QHash<QString, QStringList> properties
+        = {{QString::fromUtf8("dwidth"), {QString::fromUtf8("videoSizeChanged")}},
+           {QString::fromUtf8("dheight"), {QString::fromUtf8("videoSizeChanged")}},
+           {QString::fromUtf8("duration"),
+            {QString::fromUtf8("durationChanged"), QString::fromUtf8("durationTextChanged")}},
+           {QString::fromUtf8("time-pos"),
+            {QString::fromUtf8("positionChanged"), QString::fromUtf8("positionTextChanged")}},
+           {QString::fromUtf8("volume"), {QString::fromUtf8("volumeChanged")}},
+           {QString::fromUtf8("mute"), {QString::fromUtf8("muteChanged")}},
+           {QString::fromUtf8("seekable"), {QString::fromUtf8("seekableChanged")}},
+           {QString::fromUtf8("hwdec"), {QString::fromUtf8("hwdecChanged")}},
+           {QString::fromUtf8("vid"), {QString::fromUtf8("vidChanged")}},
+           {QString::fromUtf8("aid"), {QString::fromUtf8("aidChanged")}},
+           {QString::fromUtf8("sid"), {QString::fromUtf8("sidChanged")}},
+           {QString::fromUtf8("video-rotate"), {QString::fromUtf8("videoRotateChanged")}},
+           {QString::fromUtf8("video-out-params/aspect"), {QString::fromUtf8("videoAspectChanged")}},
+           {QString::fromUtf8("speed"), {QString::fromUtf8("speedChanged")}},
+           {QString::fromUtf8("deinterlace"), {QString::fromUtf8("deinterlaceChanged")}},
+           {QString::fromUtf8("audio-exclusive"), {QString::fromUtf8("audioExclusiveChanged")}},
+           {QString::fromUtf8("audio-file-auto"), {QString::fromUtf8("audioFileAutoChanged")}},
+           {QString::fromUtf8("sub-auto"), {QString::fromUtf8("subAutoChanged")}},
+           {QString::fromUtf8("sub-codepage"), {QString::fromUtf8("subCodepageChanged")}},
+           {QString::fromUtf8("filename"), {QString::fromUtf8("fileNameChanged")}},
+           {QString::fromUtf8("media-title"), {QString::fromUtf8("mediaTitleChanged")}},
+           {QString::fromUtf8("vo"), {QString::fromUtf8("voChanged")}},
+           {QString::fromUtf8("ao"), {QString::fromUtf8("aoChanged")}},
+           {QString::fromUtf8("screenshot-format"), {QString::fromUtf8("screenshotFormatChanged")}},
+           {QString::fromUtf8("screenshot-png-compression"),
+            {QString::fromUtf8("screenshotPngCompressionChanged")}},
+           {QString::fromUtf8("screenshot-template"),
+            {QString::fromUtf8("screenshotTemplateChanged")}},
+           {QString::fromUtf8("screenshot-directory"),
+            {QString::fromUtf8("screenshotDirectoryChanged")}},
+           {QString::fromUtf8("profile"), {QString::fromUtf8("profileChanged")}},
+           {QString::fromUtf8("hr-seek"), {QString::fromUtf8("hrSeekChanged")}},
+           {QString::fromUtf8("ytdl"), {QString::fromUtf8("ytdlChanged")}},
+           {QString::fromUtf8("load-scripts"), {QString::fromUtf8("loadScriptsChanged")}},
+           {QString::fromUtf8("path"), {QString::fromUtf8("pathChanged")}},
+           {QString::fromUtf8("file-format"), {QString::fromUtf8("fileFormatChanged")}},
+           {QString::fromUtf8("file-size"), {QString::fromUtf8("fileSizeChanged")}},
+           {QString::fromUtf8("video-bitrate"), {QString::fromUtf8("videoBitrateChanged")}},
+           {QString::fromUtf8("audio-bitrate"), {QString::fromUtf8("audioBitrateChanged")}},
+           {QString::fromUtf8("audio-device-list"), {QString::fromUtf8("audioDeviceListChanged")}},
+           {QString::fromUtf8("screenshot-tag-colorspace"),
+            {QString::fromUtf8("screenshotTagColorspaceChanged")}},
+           {QString::fromUtf8("screenshot-jpeg-quality"),
+            {QString::fromUtf8("screenshotJpegQualityChanged")}},
+           {QString::fromUtf8("video-format"), {QString::fromUtf8("videoFormatChanged")}},
+           {QString::fromUtf8("pause"), {QString::fromUtf8("playbackStateChanged")}},
+           {QString::fromUtf8("idle-active"), {QString::fromUtf8("playbackStateChanged")}},
+           {QString::fromUtf8("track-list"), {QString::fromUtf8("mediaTracksChanged")}},
+           {QString::fromUtf8("chapter-list"), {QString::fromUtf8("chaptersChanged")}},
+           {QString::fromUtf8("metadata"), {QString::fromUtf8("metadataChanged")}},
+           {QString::fromUtf8("avsync"), {QString::fromUtf8("avsyncChanged")}},
+           {QString::fromUtf8("percent-pos"),
+            {QString::fromUtf8("percentPosChanged"),
+             QString::fromUtf8("positionChanged"),
+             QString::fromUtf8("positionTextChanged")}},
+           {QString::fromUtf8("estimated-vf-fps"), {QString::fromUtf8("estimatedVfFpsChanged")}}};
 
     // These properties are changing all the time during the playback process.
     // So we have to add them to the black list, otherwise we'll get huge
     // message floods.
-    const QStringList propertyBlackList = {
-        QString::fromUtf8("time-pos"),
-        QString::fromUtf8("playback-time"),
-        QString::fromUtf8("percent-pos"),
-        QString::fromUtf8("video-bitrate"),
-        QString::fromUtf8("audio-bitrate"),
-        QString::fromUtf8("estimated-vf-fps"),
-        QString::fromUtf8("avsync")};
+    const QStringList propertyBlackList = {QString::fromUtf8("time-pos"),
+                                           QString::fromUtf8("playback-time"),
+                                           QString::fromUtf8("percent-pos"),
+                                           QString::fromUtf8("video-bitrate"),
+                                           QString::fromUtf8("audio-bitrate"),
+                                           QString::fromUtf8("estimated-vf-fps"),
+                                           QString::fromUtf8("avsync")};
 
 Q_SIGNALS:
     void onUpdate();

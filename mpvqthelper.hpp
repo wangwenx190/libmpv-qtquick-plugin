@@ -71,50 +71,43 @@ namespace qt {
 const char messagePrefix_plugin_init[] = "[PLUGIN] [INIT]";
 
 #ifndef WWX190_GENERATE_MPVAPI
-#define WWX190_GENERATE_MPVAPI(funcName, resultType, ...)                      \
-    using _WWX190_MPVAPI_lp_##funcName = resultType (*)(__VA_ARGS__);          \
+#define WWX190_GENERATE_MPVAPI(funcName, resultType, ...) \
+    using _WWX190_MPVAPI_lp_##funcName = resultType (*)(__VA_ARGS__); \
     static _WWX190_MPVAPI_lp_##funcName m_lp_##funcName = nullptr;
 #endif
 
 #ifndef WWX190_RESOLVE_MPVAPI
-#define WWX190_RESOLVE_MPVAPI(funcName)                                        \
-    if (!m_lp_##funcName) {                                                    \
-        qDebug().noquote() << messagePrefix_plugin_init << "Loading"           \
-                           << #funcName;                                       \
-        m_lp_##funcName = reinterpret_cast<_WWX190_MPVAPI_lp_##funcName>(      \
-            library.resolve(#funcName));                                       \
-        Q_ASSERT_X(m_lp_##funcName, __FUNCTION__,                              \
-                   qUtf8Printable(library.errorString()));                     \
+#define WWX190_RESOLVE_MPVAPI(funcName) \
+    if (!m_lp_##funcName) { \
+        qDebug().noquote() << messagePrefix_plugin_init << "Loading" << #funcName; \
+        m_lp_##funcName = reinterpret_cast<_WWX190_MPVAPI_lp_##funcName>( \
+            library.resolve(#funcName)); \
+        Q_ASSERT_X(m_lp_##funcName, __FUNCTION__, qUtf8Printable(library.errorString())); \
     }
 #endif
 
-WWX190_GENERATE_MPVAPI(mpv_get_property, int, mpv_handle *, const char *,
-                       mpv_format, void *)
-WWX190_GENERATE_MPVAPI(mpv_set_property, int, mpv_handle *, const char *,
-                       mpv_format, void *)
-WWX190_GENERATE_MPVAPI(mpv_set_property_async, int, mpv_handle *, uint64_t,
-                       const char *, mpv_format, void *)
-WWX190_GENERATE_MPVAPI(mpv_command_node, int, mpv_handle *, mpv_node *,
-                       mpv_node *)
-WWX190_GENERATE_MPVAPI(mpv_command_node_async, int, mpv_handle *, uint64_t,
-                       mpv_node *)
+WWX190_GENERATE_MPVAPI(mpv_get_property, int, mpv_handle *, const char *, mpv_format, void *)
+WWX190_GENERATE_MPVAPI(mpv_set_property, int, mpv_handle *, const char *, mpv_format, void *)
+WWX190_GENERATE_MPVAPI(
+    mpv_set_property_async, int, mpv_handle *, uint64_t, const char *, mpv_format, void *)
+WWX190_GENERATE_MPVAPI(mpv_command_node, int, mpv_handle *, mpv_node *, mpv_node *)
+WWX190_GENERATE_MPVAPI(mpv_command_node_async, int, mpv_handle *, uint64_t, mpv_node *)
 WWX190_GENERATE_MPVAPI(mpv_load_config_file, int, mpv_handle *, const char *)
 WWX190_GENERATE_MPVAPI(mpv_error_string, const char *, int)
-WWX190_GENERATE_MPVAPI(mpv_observe_property, int, mpv_handle *, uint64_t,
-                       const char *, mpv_format)
-WWX190_GENERATE_MPVAPI(mpv_render_context_create, int, mpv_render_context **,
-                       mpv_handle *, mpv_render_param *)
-WWX190_GENERATE_MPVAPI(mpv_render_context_set_update_callback, void,
-                       mpv_render_context *, mpv_render_update_fn, void *)
-WWX190_GENERATE_MPVAPI(mpv_render_context_render, int, mpv_render_context *,
-                       mpv_render_param *)
-WWX190_GENERATE_MPVAPI(mpv_set_wakeup_callback, void, mpv_handle *,
-                       void (*)(void *), void *)
+WWX190_GENERATE_MPVAPI(mpv_observe_property, int, mpv_handle *, uint64_t, const char *, mpv_format)
+WWX190_GENERATE_MPVAPI(
+    mpv_render_context_create, int, mpv_render_context **, mpv_handle *, mpv_render_param *)
+WWX190_GENERATE_MPVAPI(mpv_render_context_set_update_callback,
+                       void,
+                       mpv_render_context *,
+                       mpv_render_update_fn,
+                       void *)
+WWX190_GENERATE_MPVAPI(mpv_render_context_render, int, mpv_render_context *, mpv_render_param *)
+WWX190_GENERATE_MPVAPI(mpv_set_wakeup_callback, void, mpv_handle *, void (*)(void *), void *)
 WWX190_GENERATE_MPVAPI(mpv_initialize, int, mpv_handle *)
 WWX190_GENERATE_MPVAPI(mpv_render_context_free, void, mpv_render_context *)
 WWX190_GENERATE_MPVAPI(mpv_terminate_destroy, void, mpv_handle *)
-WWX190_GENERATE_MPVAPI(mpv_request_log_messages, int, mpv_handle *,
-                       const char *)
+WWX190_GENERATE_MPVAPI(mpv_request_log_messages, int, mpv_handle *, const char *)
 WWX190_GENERATE_MPVAPI(mpv_wait_event, mpv_event *, mpv_handle *, double)
 WWX190_GENERATE_MPVAPI(mpv_create, mpv_handle *)
 WWX190_GENERATE_MPVAPI(mpv_event_name, const char *, mpv_event_id)
@@ -129,8 +122,7 @@ WWX190_GENERATE_MPVAPI(mpv_free_node_contents, void, mpv_node *)
 #define m_lp_mpv_error_string mpv_error_string
 #define m_lp_mpv_observe_property mpv_observe_property
 #define m_lp_mpv_render_context_create mpv_render_context_create
-#define m_lp_mpv_render_context_set_update_callback                            \
-    mpv_render_context_set_update_callback
+#define m_lp_mpv_render_context_set_update_callback mpv_render_context_set_update_callback
 #define m_lp_mpv_render_context_render mpv_render_context_render
 #define m_lp_mpv_set_wakeup_callback mpv_set_wakeup_callback
 #define m_lp_mpv_initialize mpv_initialize
@@ -143,7 +135,8 @@ WWX190_GENERATE_MPVAPI(mpv_free_node_contents, void, mpv_node *)
 #define m_lp_mpv_free_node_contents mpv_free_node_contents
 #endif
 
-static inline void libmpv_init(const QString &path) {
+static inline void libmpv_init(const QString &path)
+{
 #ifdef WWX190_DYNAMIC_LIBMPV
     static bool resolved = false;
     if (resolved) {
@@ -151,8 +144,7 @@ static inline void libmpv_init(const QString &path) {
     }
     resolved = true;
     QLibrary library(path);
-    qDebug().noquote() << messagePrefix_plugin_init
-                       << "libmpv:" << library.fileName();
+    qDebug().noquote() << messagePrefix_plugin_init << "libmpv:" << library.fileName();
     WWX190_RESOLVE_MPVAPI(mpv_get_property)
     WWX190_RESOLVE_MPVAPI(mpv_set_property)
     WWX190_RESOLVE_MPVAPI(mpv_set_property_async)
@@ -178,7 +170,8 @@ static inline void libmpv_init(const QString &path) {
 #endif
 }
 
-static inline QVariant node_to_variant(const mpv_node *node) {
+static inline QVariant node_to_variant(const mpv_node *node)
+{
     switch (node->format) {
     case MPV_FORMAT_STRING:
         return QVariant(QString::fromUtf8(node->u.string));
@@ -200,8 +193,7 @@ static inline QVariant node_to_variant(const mpv_node *node) {
         mpv_node_list *list = node->u.list;
         QVariantMap qmap;
         for (int n = 0; n < list->num; n++) {
-            qmap.insert(QString::fromUtf8(list->keys[n]),
-                        node_to_variant(&list->values[n]));
+            qmap.insert(QString::fromUtf8(list->keys[n]), node_to_variant(&list->values[n]));
         }
         return QVariant(qmap);
     }
@@ -210,7 +202,8 @@ static inline QVariant node_to_variant(const mpv_node *node) {
     }
 }
 
-struct node_builder {
+struct node_builder
+{
     node_builder(const QVariant &v) { set(&node_, v); }
     ~node_builder() { free_node(&node_); }
     mpv_node *node() { return &node_; }
@@ -218,7 +211,8 @@ struct node_builder {
 private:
     Q_DISABLE_COPY(node_builder)
     mpv_node node_;
-    mpv_node_list *create_list(mpv_node *dst, bool is_map, int num) {
+    mpv_node_list *create_list(mpv_node *dst, bool is_map, int num)
+    {
         dst->format = is_map ? MPV_FORMAT_NODE_MAP : MPV_FORMAT_NODE_ARRAY;
         auto *list = new mpv_node_list();
         dst->u.list = list;
@@ -240,7 +234,8 @@ private:
         free_node(dst);
         return nullptr;
     }
-    char *dup_qstring(const QString &s) {
+    char *dup_qstring(const QString &s)
+    {
         QByteArray b = s.toUtf8();
         char *r = new char[b.size() + 1];
         if (r != nullptr) {
@@ -248,14 +243,12 @@ private:
         }
         return r;
     }
-    bool test_type(const QVariant &v, QMetaType::Type t) {
-        // The Qt docs say: "Although this function is declared as returning
-        // "QVariant::Type(obsolete), the return value should be interpreted
-        // as QMetaType::Type."
-        // So a cast really seems to be needed to avoid warnings (urgh).
-        return static_cast<int>(v.type()) == static_cast<int>(t);
+    bool test_type(const QVariant &v, QMetaType::Type t)
+    {
+        return static_cast<QMetaType::Type>(v.typeId()) == t;
     }
-    void set(mpv_node *dst, const QVariant &src) {
+    void set(mpv_node *dst, const QVariant &src)
+    {
         if (test_type(src, QMetaType::QString)) {
             dst->format = MPV_FORMAT_STRING;
             dst->u.string = dup_qstring(src.toString());
@@ -265,10 +258,8 @@ private:
         } else if (test_type(src, QMetaType::Bool)) {
             dst->format = MPV_FORMAT_FLAG;
             dst->u.flag = src.toBool() ? 1 : 0;
-        } else if (test_type(src, QMetaType::Int) ||
-                   test_type(src, QMetaType::LongLong) ||
-                   test_type(src, QMetaType::UInt) ||
-                   test_type(src, QMetaType::ULongLong)) {
+        } else if (test_type(src, QMetaType::Int) || test_type(src, QMetaType::LongLong)
+                   || test_type(src, QMetaType::UInt) || test_type(src, QMetaType::ULongLong)) {
             dst->format = MPV_FORMAT_INT64;
             dst->u.int64 = src.toLongLong();
         } else if (test_type(src, QMetaType::Double)) {
@@ -306,7 +297,8 @@ private:
     fail:
         dst->format = MPV_FORMAT_NONE;
     }
-    void free_node(mpv_node *dst) {
+    void free_node(mpv_node *dst)
+    {
         switch (dst->format) {
         case MPV_FORMAT_STRING:
             delete[] dst->u.string;
@@ -338,7 +330,8 @@ private:
 /**
  * RAII wrapper that calls mpv_free_node_contents() on the pointer.
  */
-struct node_autofree {
+struct node_autofree
+{
     mpv_node *ptr;
     node_autofree(mpv_node *a_ptr) : ptr(a_ptr) {}
     ~node_autofree() { m_lp_mpv_free_node_contents(ptr); }
@@ -351,7 +344,8 @@ struct node_autofree {
  * You can use get_error() or is_error() to extract the error status from a
  * QVariant value.
  */
-struct ErrorReturn {
+struct ErrorReturn
+{
     /**
      * enum mpv_error value (or a value outside of it if ABI was extended)
      */
@@ -367,7 +361,8 @@ struct ErrorReturn {
  *
  * @return error code (<0) or success (>=0)
  */
-static inline int get_error(const QVariant &v) {
+static inline int get_error(const QVariant &v)
+{
     if (!v.canConvert<ErrorReturn>()) {
         return 0;
     }
@@ -377,7 +372,10 @@ static inline int get_error(const QVariant &v) {
 /**
  * Return whether the QVariant carries a mpv error code.
  */
-static inline bool is_error(const QVariant &v) { return get_error(v) < 0; }
+static inline bool is_error(const QVariant &v)
+{
+    return get_error(v) < 0;
+}
 
 /**
  * Return the given property as mpv_node converted to QVariant, or QVariant()
@@ -386,10 +384,10 @@ static inline bool is_error(const QVariant &v) { return get_error(v) < 0; }
  * @param name the property name
  * @return the property value, or an ErrorReturn with the error code
  */
-static inline QVariant get_property(mpv_handle *ctx, const QString &name) {
+static inline QVariant get_property(mpv_handle *ctx, const QString &name)
+{
     mpv_node node;
-    const int err = m_lp_mpv_get_property(ctx, qUtf8Printable(name),
-                                          MPV_FORMAT_NODE, &node);
+    const int err = m_lp_mpv_get_property(ctx, qUtf8Printable(name), MPV_FORMAT_NODE, &node);
     if (err < 0) {
         return QVariant::fromValue(ErrorReturn(err));
     }
@@ -402,11 +400,10 @@ static inline QVariant get_property(mpv_handle *ctx, const QString &name) {
  *
  * @return mpv error code (<0 on error, >= 0 on success)
  */
-static inline int set_property(mpv_handle *ctx, const QString &name,
-                               const QVariant &v) {
+static inline int set_property(mpv_handle *ctx, const QString &name, const QVariant &v)
+{
     node_builder node(v);
-    return m_lp_mpv_set_property(ctx, qUtf8Printable(name), MPV_FORMAT_NODE,
-                                 node.node());
+    return m_lp_mpv_set_property(ctx, qUtf8Printable(name), MPV_FORMAT_NODE, node.node());
 }
 
 /**
@@ -415,12 +412,16 @@ static inline int set_property(mpv_handle *ctx, const QString &name,
  *
  * @return mpv error code (<0 on error, >= 0 on success)
  */
-static inline int set_property_async(mpv_handle *ctx, const QString &name,
+static inline int set_property_async(mpv_handle *ctx,
+                                     const QString &name,
                                      const QVariant &v,
-                                     quint64 reply_userdata) {
+                                     quint64 reply_userdata)
+{
     node_builder node(v);
-    return m_lp_mpv_set_property_async(ctx, reply_userdata,
-                                       qUtf8Printable(name), MPV_FORMAT_NODE,
+    return m_lp_mpv_set_property_async(ctx,
+                                       reply_userdata,
+                                       qUtf8Printable(name),
+                                       MPV_FORMAT_NODE,
                                        node.node());
 }
 
@@ -430,7 +431,8 @@ static inline int set_property_async(mpv_handle *ctx, const QString &name,
  * @param args command arguments, with args[0] being the command name as string
  * @return the property value, or an ErrorReturn with the error code
  */
-static inline QVariant command(mpv_handle *ctx, const QVariant &args) {
+static inline QVariant command(mpv_handle *ctx, const QVariant &args)
+{
     node_builder node(args);
     mpv_node res;
     const int err = m_lp_mpv_command_node(ctx, node.node(), &res);
@@ -447,73 +449,83 @@ static inline QVariant command(mpv_handle *ctx, const QVariant &args) {
  * @param args command arguments, with args[0] being the command name as string
  * @return mpv error code (<0 on error, >= 0 on success)
  */
-static inline int command_async(mpv_handle *ctx, const QVariant &args,
-                                quint64 reply_userdata) {
+static inline int command_async(mpv_handle *ctx, const QVariant &args, quint64 reply_userdata)
+{
     node_builder node(args);
     return m_lp_mpv_command_node_async(ctx, reply_userdata, node.node());
 }
 
-static inline int load_config_file(mpv_handle *ctx, const QString &fileName) {
+static inline int load_config_file(mpv_handle *ctx, const QString &fileName)
+{
     return m_lp_mpv_load_config_file(ctx, qUtf8Printable(fileName));
 }
 
-static inline int observe_property(mpv_handle *ctx, const QString &name,
-                                   quint64 reply_userdata) {
-    return m_lp_mpv_observe_property(ctx, reply_userdata, qUtf8Printable(name),
-                                     MPV_FORMAT_NONE);
+static inline int observe_property(mpv_handle *ctx, const QString &name, quint64 reply_userdata)
+{
+    return m_lp_mpv_observe_property(ctx, reply_userdata, qUtf8Printable(name), MPV_FORMAT_NONE);
 }
 
-static inline QString error_string(int errCode) {
+static inline QString error_string(int errCode)
+{
     return QString::fromUtf8(m_lp_mpv_error_string(errCode));
 }
 
 static inline int render_context_create(mpv_render_context **res,
                                         mpv_handle *ctx,
-                                        mpv_render_param *params) {
+                                        mpv_render_param *params)
+{
     return m_lp_mpv_render_context_create(res, ctx, params);
 }
 
-static inline void
-render_context_set_update_callback(mpv_render_context *ctx,
-                                   mpv_render_update_fn callback,
-                                   void *callback_ctx) {
+static inline void render_context_set_update_callback(mpv_render_context *ctx,
+                                                      mpv_render_update_fn callback,
+                                                      void *callback_ctx)
+{
     m_lp_mpv_render_context_set_update_callback(ctx, callback, callback_ctx);
 }
 
-static inline int render_context_render(mpv_render_context *ctx,
-                                        mpv_render_param *params) {
+static inline int render_context_render(mpv_render_context *ctx, mpv_render_param *params)
+{
     return m_lp_mpv_render_context_render(ctx, params);
 }
 
-static inline void set_wakeup_callback(mpv_handle *ctx, void (*cb)(void *),
-                                       void *d) {
+static inline void set_wakeup_callback(mpv_handle *ctx, void (*cb)(void *), void *d)
+{
     m_lp_mpv_set_wakeup_callback(ctx, cb, d);
 }
 
-static inline int initialize(mpv_handle *ctx) {
+static inline int initialize(mpv_handle *ctx)
+{
     return m_lp_mpv_initialize(ctx);
 }
 
-static inline void render_context_free(mpv_render_context *ctx) {
+static inline void render_context_free(mpv_render_context *ctx)
+{
     m_lp_mpv_render_context_free(ctx);
 }
 
-static inline void terminate_destroy(mpv_handle *ctx) {
+static inline void terminate_destroy(mpv_handle *ctx)
+{
     m_lp_mpv_terminate_destroy(ctx);
 }
 
-static inline int request_log_messages(mpv_handle *ctx,
-                                       const QString &min_level) {
+static inline int request_log_messages(mpv_handle *ctx, const QString &min_level)
+{
     return m_lp_mpv_request_log_messages(ctx, qUtf8Printable(min_level));
 }
 
-static inline mpv_event *wait_event(mpv_handle *ctx, double timeout) {
+static inline mpv_event *wait_event(mpv_handle *ctx, double timeout)
+{
     return m_lp_mpv_wait_event(ctx, timeout);
 }
 
-static inline mpv_handle *create() { return m_lp_mpv_create(); }
+static inline mpv_handle *create()
+{
+    return m_lp_mpv_create();
+}
 
-static inline QString event_name(mpv_event_id event) {
+static inline QString event_name(mpv_event_id event)
+{
     return QString::fromUtf8(m_lp_mpv_event_name(event));
 }
 
