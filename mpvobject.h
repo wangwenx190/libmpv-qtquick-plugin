@@ -32,10 +32,8 @@
 #define MPV_ENABLE_DEPRECATED 0
 
 #include "mpvqthelper.hpp"
-#include <QHash>
 #include <QLoggingCategory>
 #include <QQuickFramebufferObject>
-#include <QUrl>
 
 Q_DECLARE_LOGGING_CATEGORY(lcMpv)
 Q_DECLARE_LOGGING_CATEGORY(lcMpvLog)
@@ -123,8 +121,6 @@ class MpvObject : public QQuickFramebufferObject
     Q_PROPERTY(QString positionText READ positionText NOTIFY positionTextChanged)
     Q_PROPERTY(QString durationText READ durationText NOTIFY durationTextChanged)
 
-    using SingleTrackInfo = QHash<QString, QVariant>;
-
 public:
     enum class PlaybackState { Stopped, Playing, Paused };
     Q_ENUM(PlaybackState)
@@ -150,16 +146,16 @@ public:
 
     struct MediaTracks
     {
-        QVector<SingleTrackInfo> videoChannels = {};
-        QVector<SingleTrackInfo> audioTracks = {};
-        QVector<SingleTrackInfo> subtitleStreams = {};
+        QList<QVariantHash> videoChannels = {};
+        QList<QVariantHash> audioTracks = {};
+        QList<QVariantHash> subtitleStreams = {};
     };
 
-    using Chapters = QVector<SingleTrackInfo>;
+    using Chapters = QList<QVariantHash>;
 
-    using AudioDevices = QVector<SingleTrackInfo>;
+    using AudioDevices = QList<QVariantHash>;
 
-    using Metadata = SingleTrackInfo;
+    using Metadata = QVariantHash;
 
     explicit MpvObject(QQuickItem *parent = nullptr);
     ~MpvObject() override;

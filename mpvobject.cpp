@@ -701,7 +701,7 @@ MpvObject::AudioDevices MpvObject::audioDeviceList() const
     QVariantList deviceList = mpvGetProperty(QString::fromUtf8("audio-device-list")).toList();
     for (auto &&device : qAsConst(deviceList)) {
         const auto deviceInfo = device.toMap();
-        SingleTrackInfo singleTrackInfo;
+        QVariantHash singleTrackInfo;
         singleTrackInfo[QString::fromUtf8("name")] = deviceInfo[QString::fromUtf8("name")];
         singleTrackInfo[QString::fromUtf8("description")]
             = deviceInfo[QString::fromUtf8("description")];
@@ -731,7 +731,7 @@ MpvObject::MediaTracks MpvObject::mediaTracks() const
             && (trackInfo[QString::fromUtf8("type")] != QString::fromUtf8("sub"))) {
             continue;
         }
-        SingleTrackInfo singleTrackInfo;
+        QVariantHash singleTrackInfo;
         singleTrackInfo[QString::fromUtf8("id")] = trackInfo[QString::fromUtf8("id")];
         singleTrackInfo[QString::fromUtf8("type")] = trackInfo[QString::fromUtf8("type")];
         singleTrackInfo[QString::fromUtf8("src-id")] = trackInfo[QString::fromUtf8("src-id")];
@@ -785,7 +785,7 @@ MpvObject::Chapters MpvObject::chapters() const
     QVariantList chapterList = mpvGetProperty(QString::fromUtf8("chapter-list")).toList();
     for (auto &&chapter : qAsConst(chapterList)) {
         const auto chapterInfo = chapter.toMap();
-        SingleTrackInfo singleTrackInfo;
+        QVariantHash singleTrackInfo;
         singleTrackInfo[QString::fromUtf8("title")] = chapterInfo[QString::fromUtf8("title")];
         singleTrackInfo[QString::fromUtf8("time")] = chapterInfo[QString::fromUtf8("time")];
         chapters.append(singleTrackInfo);
